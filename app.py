@@ -2,9 +2,32 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
+import plotly.graph_objects as go
 
 st.set_page_config(page_title="AIQON | Command Center", layout="wide", initial_sidebar_state="expanded")
-CORES = {'LinkedIn': '#0A66C2', 'Mailchimp': '#F97316', 'Blog': '#10B981', 'Total': '#1E293B', 'Fundo': '#F8FAFC'}
+
+# ==========================================
+# 🎨 IDENTIDADE VISUAL B2B (CORES DA MARCA)
+# ==========================================
+CORES_PRODUTOS = {
+    'Action1': '#0A66C2',           # Azul LinkedIn
+    'Netwrix': '#DC2626',           # Vermelho (Solicitado)
+    '42Crunch': '#F97316',          # Laranja
+    'Ox Security': '#8B5CF6',       # Roxo
+    'Cynet': '#06B6D4',             # Ciano
+    'Easy Inventory': '#F59E0B',    # Amarelo B2B
+    'Keepit': '#10B981',            # Verde
+    'Grip': '#14B8A6',              # Teal
+    'Manage Engine': '#3B82F6',     # Azul Claro
+    'Wallarm': '#E11D48',           # Rosa Escuro
+    'Institucional / Outros': '#94A3B8' # Cinza Neutro
+}
+
+# Formatador PT-BR
+def f_br(num, is_pct=False):
+    if pd.isna(num): return "0"
+    if is_pct: return f"{num * 100:.1f}%".replace('.', ',')
+    return f"{int(num):,}".replace(',', '.')
 
 @st.cache_data
 def carregar_dados():
@@ -12,12 +35,10 @@ def carregar_dados():
     blo = pd.read_csv('dataset/blog_clean.csv')
     mai = pd.read_csv('dataset/mailchimp_clean.csv')
 
-    # Convertendo datas
     lin['Data'] = pd.to_datetime(lin['Data da postagem']).dt.date
     blo['Data'] = pd.to_datetime(blo['Data']).dt.date
     mai['Data de Envio'] = pd.to_datetime(mai['Data de Envio']).dt.date
 
-    # --- TAG DE PRODUTO ---
     def tag_produto(t):
         t = str(t).lower()
         if 'action1' in t: return 'Action1'
@@ -33,27 +54,23 @@ def carregar_dados():
         elif 'wallarm' in t: return 'Wallarm'
         else: return 'Institucional / Outros'
 
-    # ==========================================
-    # 🧠 MAILCHIMP (AGRUPANDO POR TÍTULO)
-    # ==========================================
+    # --- MAILCHIMP ---
     mai['Tag Produto'] = mai['Título'].apply(tag_produto)
-    mai['Aberturas_Abs'] = np.round(mai['Qtd Enviados'] * mai['Taxa de Abertura']).astype(int)
-    mai['Cliques_Abs'] = np.round(mai['Qtd Enviados'] * mai['Clicks']).astype(int)
+    # Correção Matemática (impede valores de trilhões e casas decimais infinitas)
+    mai['Aberturas_Abs'] = (mai['Qtd Enviados'] * mai['Taxa de Abertura']).round().astype(int)
+    mai['Cliques_Abs'] = (mai['Qtd Enviados'] * mai['Clicks']).round().astype(int)
 
     mai_grp = mai.groupby(['Título', 'Tag Produto']).agg({
         'Qtd Enviados': 'sum', 'Aberturas_Abs': 'sum', 'Cliques_Abs': 'sum', 'Data de Envio': 'max'
     }).reset_index()
 
-    # Recalculando DAX corretamente a partir dos absolutos
     mai_grp['Taxa de Abertura'] = np.where(mai_grp['Qtd Enviados']==0, 0, mai_grp['Aberturas_Abs'] / mai_grp['Qtd Enviados'])
-    mai_grp['Taxa de Clique por Abertura (CTOR)'] = np.where(mai_grp['Aberturas_Abs']==0, 0, mai_grp['Cliques_Abs'] / mai_grp['Aberturas_Abs'])
+    mai_grp['CTOR'] = np.where(mai_grp['Aberturas_Abs']==0, 0, mai_grp['Cliques_Abs'] / mai_grp['Aberturas_Abs'])
     mai_grp['Total Ignorados'] = mai_grp['Qtd Enviados'] - mai_grp['Aberturas_Abs']
     mai_grp['Plataforma'] = "Mailchimp"
-    mai_grp['Link'] = "Não aplicável"
+    mai_grp['Link'] = "N/A"
 
-    # ==========================================
-    # 🧠 BLOG (AGRUPANDO POR URL)
-    # ==========================================
+    # --- BLOG ---
     blo['Tag Produto'] = blo['URL'].apply(tag_produto)
     blo['Título Post'] = blo['URL'].str.replace("https://aiqon.com.br/blog/", "", regex=False).str.replace("/", "", regex=False).str.replace("-", " ").str.upper()
 
@@ -65,11 +82,9 @@ def carregar_dados():
     blo_grp['Plataforma'] = "Blog"
     blo_grp['Link'] = blo_grp['URL']
 
-    # ==========================================
-    # 🧠 LINKEDIN (AGRUPANDO POR POSTAGEM)
-    # ==========================================
+    # --- LINKEDIN ---
     lin['Tag Produto'] = lin['Texto'].apply(tag_produto)
-    lin['Tamanho do Post'] = np.where(lin['Texto'].str.len() < 500, "Curto (Teaser)", np.where(lin['Texto'].str.len() < 1200, "Médio (Padrão)", "Longo (Artigo)"))
+    lin['Tamanho do Post'] = np.where(lin['Texto'].str.len() < 500, "Curto", np.where(lin['Texto'].str.len() < 1200, "Médio", "Longo"))
     lin['Tipo Conteúdo'] = np.where(lin['Texto'].str.contains('parceria|solução', case=False, na=False), "Comercial/Venda", "Editorial/Educativo")
 
     lin_grp = lin.groupby(['Link da Postagem', 'Título', 'Tag Produto', 'Tamanho do Post', 'Tipo Conteúdo']).agg({
@@ -81,19 +96,16 @@ def carregar_dados():
     lin_grp['Plataforma'] = "LinkedIn"
     lin_grp['Link'] = lin_grp['Link da Postagem']
 
-    # ==========================================
-    # 🌐 FULL BLAST (OVERVIEW)
-    # ==========================================
+    # --- OVERVIEW ---
     r_lin = lin_grp.groupby(['Data', 'Tag Produto'])['Total Engajamento'].sum().reset_index()
     r_blo = blo_grp.groupby(['Data', 'Tag Produto'])['Views'].sum().reset_index()
     r_mai = mai_grp.groupby(['Data de Envio', 'Tag Produto'])['Aberturas_Abs'].sum().reset_index().rename(columns={'Data de Envio': 'Data'})
 
     over = pd.merge(r_lin, r_blo, on=['Data', 'Tag Produto'], how='outer')
     over = pd.merge(over, r_mai, on=['Data', 'Tag Produto'], how='outer').fillna(0)
-    over['Impacto Total'] = over['Total Engajamento'] + over['Views'] + over['Aberturas_Abs']
+    over['Impacto Total'] = (over['Total Engajamento'] + over['Views'] + over['Aberturas_Abs']).astype(int)
     over = over.dropna(subset=['Data']).sort_values('Data')
 
-    # CRIANDO A LISTA DE DADOS UNIFICADA
     df_lista = pd.concat([
         lin_grp[['Data', 'Título', 'Plataforma', 'Link', 'Tag Produto', 'Total Engajamento']].rename(columns={'Total Engajamento': 'Tração (Absoluto)'}),
         blo_grp[['Data', 'Título Post', 'Plataforma', 'Link', 'Tag Produto', 'Views']].rename(columns={'Título Post': 'Título', 'Views': 'Tração (Absoluto)'}),
@@ -105,12 +117,11 @@ def carregar_dados():
 df_over, df_lin, df_blo, df_mai, df_lista = carregar_dados()
 
 # ==========================================
-# SIDEBAR DE FILTROS (ALLSELECTED)
+# SIDEBAR / FILTROS
 # ==========================================
 st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/c/c3/Python-logo-notext.svg", width=50)
-st.sidebar.title("Comandos")
-menu = st.sidebar.radio("Navegação:", ["🌐 Overview (Full Blast)", "💼 LinkedIn Lab", "📧 Mailchimp", "📝 Blog (SEO)"])
-
+st.sidebar.title("Comandos Analíticos")
+menu = st.sidebar.radio("Navegação:", ["🌐 Visão Geral", "💼 LinkedIn", "📧 Mailchimp", "📝 Blog (SEO)"])
 st.sidebar.markdown("---")
 st.sidebar.subheader("Filtros Globais")
 
@@ -131,29 +142,32 @@ else:
     over_filt, lin_filt, blo_filt, mai_filt, lista_filt = df_over, df_lin, df_blo, df_mai, df_lista
 
 # ==========================================
-# MÓDULOS (TELAS)
+# TELAS DO DASHBOARD
 # ==========================================
 
-if menu == "🌐 Overview (Full Blast)":
+if menu == "🌐 Visão Geral":
     st.title("Visão Geral: Impacto da Marca (Full Blast)")
+    
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Impacto Total (Toques)", f"{int(over_filt['Impacto Total'].sum()):,}")
-    c2.metric("Total Social (Engajamento)", f"{int(over_filt['Total Engajamento'].sum()):,}")
-    c3.metric("Total Views Blog", f"{int(over_filt['Views'].sum()):,}")
-    c4.metric("Total Aberturas Email", f"{int(over_filt['Aberturas_Abs'].sum()):,}")
+    c1.metric("Impacto Total (Toques)", f_br(over_filt['Impacto Total'].sum()))
+    c2.metric("Total Social (LinkedIn)", f_br(over_filt['Total Engajamento'].sum()))
+    c3.metric("Total Views Blog", f_br(over_filt['Views'].sum()))
+    c4.metric("Total Aberturas Email", f_br(over_filt['Aberturas_Abs'].sum()))
 
     st.markdown("---")
     col1, col2 = st.columns([2, 1])
     with col1:
         st.subheader("Evolução Diária do Barulho")
         evo = over_filt.groupby('Data').sum(numeric_only=True).reset_index()
-        fig = px.area(evo, x='Data', y='Impacto Total', color_discrete_sequence=[CORES['Total']], custom_data=['Total Engajamento', 'Views', 'Aberturas_Abs'])
-        fig.update_traces(hovertemplate="<b>Data:</b> %{x}<br><b>Impacto Total:</b> %{y:,.0f}<br><br>LinkedIn: %{customdata[0]:,.0f}<br>Blog: %{customdata[1]:,.0f}<br>Mailchimp: %{customdata[2]:,.0f}<extra></extra>")
+        fig = px.area(evo, x='Data', y='Impacto Total', color_discrete_sequence=['#1E293B'], custom_data=['Total Engajamento', 'Views', 'Aberturas_Abs'])
+        fig.update_traces(hovertemplate="<b>Data:</b> %{x}<br><b>Impacto Total:</b> %{y}<br><br>LinkedIn: %{customdata[0]}<br>Blog: %{customdata[1]}<br>Mailchimp: %{customdata[2]}<extra></extra>")
         st.plotly_chart(fig, use_container_width=True)
     with col2:
         st.subheader("Tração por Produto")
         rank = over_filt.groupby('Tag Produto')['Impacto Total'].sum().reset_index().sort_values('Impacto Total')
-        st.plotly_chart(px.bar(rank[rank['Tag Produto'] != 'Institucional / Outros'], y='Tag Produto', x='Impacto Total', orientation='h', color_discrete_sequence=[CORES['LinkedIn']]), use_container_width=True)
+        fig2 = px.bar(rank[rank['Tag Produto'] != 'Institucional / Outros'], y='Tag Produto', x='Impacto Total', orientation='h', color='Tag Produto', color_discrete_map=CORES_PRODUTOS)
+        fig2.update_layout(showlegend=False)
+        st.plotly_chart(fig2, use_container_width=True)
 
     st.subheader("Lista Mestra de Ativos de Marketing")
     st.dataframe(
@@ -162,12 +176,12 @@ if menu == "🌐 Overview (Full Blast)":
         use_container_width=True, hide_index=True
     )
 
-elif menu == "💼 LinkedIn Lab":
+elif menu == "💼 LinkedIn":
     st.title("LinkedIn: Desempenho e IA")
     c1, c2, c3 = st.columns(3)
-    c1.metric("Média Engajamento/Post", f"{lin_filt['Total Engajamento'].mean():.1f}" if not lin_filt.empty else "0")
-    c2.metric("Taxa Média de Engajamento (ER)", f"{(lin_filt['Total Engajamento'].sum() / lin_filt['Seguidores'].sum() if lin_filt['Seguidores'].sum() > 0 else 0):.2%}")
-    c3.metric("Total de Publicações", f"{len(lin_filt)}")
+    c1.metric("Média Engajamento/Post", f_br(lin_filt['Total Engajamento'].mean()))
+    c2.metric("Taxa Média de Engajamento (ER)", f_br((lin_filt['Total Engajamento'].sum() / lin_filt['Seguidores'].sum() if lin_filt['Seguidores'].sum() > 0 else 0), True))
+    c3.metric("Total de Publicações", f_br(len(lin_filt)))
 
     st.markdown("---")
     ab = lin_filt.groupby(['Tipo Conteúdo', 'Tamanho do Post'])['Total Engajamento'].mean().reset_index()
@@ -175,60 +189,76 @@ elif menu == "💼 LinkedIn Lab":
 
     st.dataframe(
         lin_filt[['Data', 'Título', 'Tag Produto', 'Tipo Conteúdo', 'Tamanho do Post', 'Total Engajamento', 'Taxa Engajamento (ER)', 'Link da Postagem']].sort_values('Total Engajamento', ascending=False),
-        column_config={"Taxa Engajamento (ER)": st.column_config.NumberColumn(format="%.2f%%"), "Link da Postagem": st.column_config.LinkColumn("Acessar")},
+        column_config={"Taxa Engajamento (ER)": st.column_config.NumberColumn(format="%.2f%%"), "Link da Postagem": st.column_config.LinkColumn("🔗 Acessar")},
         use_container_width=True, hide_index=True
     )
 
 elif menu == "📧 Mailchimp":
-    st.title("Mailchimp: Conversão de E-mail")
-    # Lógica DAX Global
+    st.title("Mailchimp: Conversão e Funil")
     ctor_global = mai_filt['Cliques_Abs'].sum() / mai_filt['Aberturas_Abs'].sum() if mai_filt['Aberturas_Abs'].sum() > 0 else 0
     taxa_abertura_global = mai_filt['Aberturas_Abs'].sum() / mai_filt['Qtd Enviados'].sum() if mai_filt['Qtd Enviados'].sum() > 0 else 0
 
     c1, c2, c3 = st.columns(3)
-    c1.metric("Taxa de Abertura Global", f"{taxa_abertura_global:.2%}")
-    c2.metric("Taxa CTOR Global", f"{ctor_global:.2%}")
-    c3.metric("E-mails Disparados", f"{mai_filt['Qtd Enviados'].sum():,}")
+    c1.metric("Taxa de Abertura Global", f_br(taxa_abertura_global, True))
+    c2.metric("Taxa CTOR Global", f_br(ctor_global, True))
+    c3.metric("E-mails Disparados", f_br(mai_filt['Qtd Enviados'].sum()))
 
     st.markdown("---")
-    mai_plot = mai_filt.copy()
-    mai_plot['Diff CTOR'] = np.where(ctor_global==0, 0, (mai_plot['Taxa de Clique por Abertura (CTOR)'] - ctor_global) / ctor_global)
-    mai_plot['Texto Performance Tooltip'] = "Este e-mail performou " + (mai_plot['Diff CTOR']*100).map('{:+.1f}%'.format) + " vs média global."
+    col1, col2 = st.columns([1, 1])
 
-    fig = px.scatter(
-        mai_plot, x='Taxa de Abertura', y='Taxa de Clique por Abertura (CTOR)', size='Qtd Enviados', color='Tag Produto', hover_name='Título',
-        custom_data=['Texto Performance Tooltip', 'Total Ignorados', 'Aberturas_Abs']
-    )
-    fig.update_traces(hovertemplate="<b>%{hovertext}</b><br><br>Abertura: %{x:.1%}<br>CTOR: %{y:.1%}<br>📊 Aberturas: %{customdata[2]:,.0f}<br>❌ Ignorados: %{customdata[1]:,.0f}<br><br><i>%{customdata[0]}</i><extra></extra>")
-    fig.add_vline(x=taxa_abertura_global, line_dash="dot", line_color="red")
-    fig.add_hline(y=ctor_global, line_dash="dot", line_color="red")
-    fig.update_layout(xaxis_tickformat='.1%', yaxis_tickformat='.1%')
-    st.plotly_chart(fig, use_container_width=True)
+    with col1:
+        st.subheader("Funil de Retenção")
+        fig_funil = go.Figure(go.Funnel(
+            y=['1. E-mails Enviados', '2. Aberturas (Interesse)', '3. Cliques (Intenção)'],
+            x=[mai_filt['Qtd Enviados'].sum(), mai_filt['Aberturas_Abs'].sum(), mai_filt['Cliques_Abs'].sum()],
+            textinfo="value+percent initial",
+            marker={"color": ["#1E293B", "#F97316", "#10B981"]}
+        ))
+        fig_funil.update_layout(margin=dict(l=0, r=0, t=30, b=0))
+        st.plotly_chart(fig_funil, use_container_width=True)
 
+    with col2:
+        st.subheader("Abertura vs CTOR (Bolhas)")
+        mai_plot = mai_filt.copy()
+        mai_plot['Diff CTOR'] = np.where(ctor_global==0, 0, (mai_plot['CTOR'] - ctor_global) / ctor_global)
+        mai_plot['Tooltip'] = "E-mail performou " + (mai_plot['Diff CTOR']*100).map('{:+.1f}%'.format).str.replace('.', ',') + " vs média global."
+
+        fig_scatter = px.scatter(
+            mai_plot, x='Taxa de Abertura', y='CTOR', size='Qtd Enviados', color='Tag Produto', hover_name='Título',
+            color_discrete_map=CORES_PRODUTOS, custom_data=['Tooltip', 'Total Ignorados', 'Aberturas_Abs']
+        )
+        fig_scatter.update_traces(hovertemplate="<b>%{hovertext}</b><br>Abertura: %{x:.1%}<br>CTOR: %{y:.1%}<br>📊 Aberturas: %{customdata[2]}<br>❌ Ignorados: %{customdata[1]}<br><br><i>%{customdata[0]}</i><extra></extra>")
+        fig_scatter.add_vline(x=taxa_abertura_global, line_dash="dot", line_color="red")
+        fig_scatter.add_hline(y=ctor_global, line_dash="dot", line_color="red")
+        fig_scatter.update_layout(xaxis_tickformat='.1%', yaxis_tickformat='.1%', margin=dict(l=0, r=0, t=30, b=0))
+        st.plotly_chart(fig_scatter, use_container_width=True)
+
+    st.subheader("Auditoria de Campanhas")
     st.dataframe(
-        mai_filt[['Data de Envio', 'Título', 'Tag Produto', 'Qtd Enviados', 'Taxa de Abertura', 'Taxa de Clique por Abertura (CTOR)']].sort_values('Taxa de Clique por Abertura (CTOR)', ascending=False),
-        column_config={"Taxa de Abertura": st.column_config.NumberColumn(format="%.2f%%"), "Taxa de Clique por Abertura (CTOR)": st.column_config.NumberColumn(format="%.2f%%")},
+        mai_filt[['Data de Envio', 'Título', 'Tag Produto', 'Qtd Enviados', 'Aberturas_Abs', 'Cliques_Abs', 'Taxa de Abertura', 'CTOR']].sort_values('CTOR', ascending=False),
+        column_config={"Taxa de Abertura": st.column_config.NumberColumn(format="%.1f%%"), "CTOR": st.column_config.NumberColumn(format="%.1f%%")},
         use_container_width=True, hide_index=True
     )
 
-elif menu == "📝 Blog":
+elif menu == "📝 Blog (SEO)":
     st.title("Blog: Retenção e SEO")
     tempo_global = blo_filt['Tempo da Página'].mean() if not blo_filt.empty else 0
     tx_conversao_global = blo_filt['Clicks'].sum() / blo_filt['Views'].sum() if blo_filt['Views'].sum() > 0 else 0
 
     c1, c2, c3 = st.columns(3)
-    c1.metric("Tempo Médio Global (s)", f"{tempo_global:.1f}s")
-    c2.metric("Taxa Conversão Global", f"{tx_conversao_global:.2%}")
-    c3.metric("Leituras (Views)", f"{blo_filt['Views'].sum():,}")
+    c1.metric("Tempo Médio Global", f_br(tempo_global) + "s")
+    c2.metric("Taxa Conversão Global", f_br(tx_conversao_global, True))
+    c3.metric("Total de Leituras", f_br(blo_filt['Views'].sum()))
 
     st.markdown("---")
     blo_plot = blo_filt.copy()
     blo_plot['Diff Retencao'] = np.where(tempo_global==0, 0, (blo_plot['Tempo da Página'] - tempo_global) / tempo_global)
     blo_plot['Texto_Dir'] = np.where(blo_plot['Diff Retencao'] > 0, "acima", "abaixo")
-    blo_plot['Texto Performance Blog'] = "⏳ Retenção: " + (blo_plot['Diff Retencao'].abs()*100).map('{:.1f}%'.format) + " " + blo_plot['Texto_Dir'] + " da média do blog.<br>🎯 Conversão: Gerou um total de " + blo_plot['Clicks'].astype(str) + " cliques."
+    blo_plot['Tooltip'] = "⏳ Retenção: " + (blo_plot['Diff Retencao'].abs()*100).map('{:.1f}%'.format).str.replace('.', ',') + " " + blo_plot['Texto_Dir'] + " da média.<br>🎯 Conversão: Gerou " + blo_plot['Clicks'].astype(str) + " cliques."
 
     fig = px.scatter(
-        blo_plot, x='Views', y='Tempo da Página', size='Clicks', color='Tag Produto', hover_name='Título Post', custom_data=['Texto Performance Blog', 'Taxa Conversão Blog']
+        blo_plot, x='Views', y='Tempo da Página', size='Clicks', color='Tag Produto', hover_name='Título Post', 
+        color_discrete_map=CORES_PRODUTOS, custom_data=['Tooltip', 'Taxa Conversão Blog']
     )
     fig.update_traces(hovertemplate="<b>%{hovertext}</b><br>Taxa Conversão: %{customdata[1]:.1%}<br>Views: %{x}<br>Tempo: %{y:.0f}s<br><br>%{customdata[0]}<extra></extra>")
     fig.add_hline(y=tempo_global, line_dash="dot", line_color="red")
@@ -236,6 +266,6 @@ elif menu == "📝 Blog":
 
     st.dataframe(
         blo_filt[['Data', 'Título Post', 'Tag Produto', 'Views', 'Tempo da Página', 'Taxa Conversão Blog', 'URL']].sort_values('Views', ascending=False),
-        column_config={"Taxa Conversão Blog": st.column_config.NumberColumn(format="%.2f%%"), "URL": st.column_config.LinkColumn("Ler Artigo")},
+        column_config={"Taxa Conversão Blog": st.column_config.NumberColumn(format="%.1f%%"), "URL": st.column_config.LinkColumn("🔗 Ler Artigo")},
         use_container_width=True, hide_index=True
     )
