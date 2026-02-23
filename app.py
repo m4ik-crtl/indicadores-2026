@@ -6,27 +6,25 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="AIQON | Command Center", layout="wide", initial_sidebar_state="expanded")
 
-# ==========================================
-# 🎨 IDENTIDADE VISUAL B2B (CORES DA MARCA)
-# ==========================================
+# --- Identidade Visual B2B ---
 CORES_PRODUTOS = {
-    'Action1': '#0A66C2',           # Azul LinkedIn
-    'Netwrix': '#DC2626',           # Vermelho (Solicitado)
-    '42Crunch': '#F97316',          # Laranja
-    'Ox Security': '#8B5CF6',       # Roxo
-    'Cynet': '#06B6D4',             # Ciano
-    'Easy Inventory': '#F59E0B',    # Amarelo B2B
-    'Keepit': '#10B981',            # Verde
-    'Grip': '#14B8A6',              # Teal
-    'Manage Engine': '#3B82F6',     # Azul Claro
-    'Wallarm': '#E11D48',           # Rosa Escuro
-    'Institucional / Outros': '#94A3B8' # Cinza Neutro
+    'Action1': '#0A66C2',           
+    'Netwrix': '#DC2626',           
+    '42Crunch': '#F97316',          
+    'Ox Security': '#8B5CF6',       
+    'Cynet': '#06B6D4',             
+    'Easy Inventory': '#F59E0B',    
+    'Keepit': '#10B981',            
+    'Grip': '#14B8A6',              
+    'Manage Engine': '#3B82F6',     
+    'Wallarm': '#E11D48',           
+    'Institucional / Outros': '#94A3B8' 
 }
 
 # Formatador PT-BR
 def f_br(num, is_pct=False):
     if pd.isna(num): return "0"
-    if is_pct: return f"{num * 100:.1f}%".replace('.', ',')
+    if is_pct: return f"{num * 100:.2f}%".replace('.', ',')
     return f"{int(num):,}".replace(',', '.')
 
 @st.cache_data
@@ -56,7 +54,7 @@ def carregar_dados():
 
     # --- MAILCHIMP ---
     mai['Tag Produto'] = mai['Título'].apply(tag_produto)
-    # Correção Matemática (impede valores de trilhões e casas decimais infinitas)
+    # Matemática: Calculando os absolutos reais a partir da taxa
     mai['Aberturas_Abs'] = (mai['Qtd Enviados'] * mai['Taxa de Abertura']).round().astype(int)
     mai['Cliques_Abs'] = (mai['Qtd Enviados'] * mai['Clicks']).round().astype(int)
 
@@ -218,25 +216,25 @@ elif menu == "📧 Mailchimp":
         st.plotly_chart(fig_funil, use_container_width=True)
 
     with col2:
-        st.subheader("Abertura vs CTOR (Bolhas)")
+        st.subheader("Abertura vs CTOR")
         mai_plot = mai_filt.copy()
         mai_plot['Diff CTOR'] = np.where(ctor_global==0, 0, (mai_plot['CTOR'] - ctor_global) / ctor_global)
-        mai_plot['Tooltip'] = "E-mail performou " + (mai_plot['Diff CTOR']*100).map('{:+.1f}%'.format).str.replace('.', ',') + " vs média global."
+        mai_plot['Tooltip'] = "E-mail performou " + (mai_plot['Diff CTOR']*100).map('{:+.2f}%'.format).str.replace('.', ',') + " vs média global."
 
         fig_scatter = px.scatter(
             mai_plot, x='Taxa de Abertura', y='CTOR', size='Qtd Enviados', color='Tag Produto', hover_name='Título',
             color_discrete_map=CORES_PRODUTOS, custom_data=['Tooltip', 'Total Ignorados', 'Aberturas_Abs']
         )
-        fig_scatter.update_traces(hovertemplate="<b>%{hovertext}</b><br>Abertura: %{x:.1%}<br>CTOR: %{y:.1%}<br>📊 Aberturas: %{customdata[2]}<br>❌ Ignorados: %{customdata[1]}<br><br><i>%{customdata[0]}</i><extra></extra>")
+        fig_scatter.update_traces(hovertemplate="<b>%{hovertext}</b><br>Abertura: %{x:.2%}<br>CTOR: %{y:.2%}<br>📊 Aberturas: %{customdata[2]}<br>❌ Ignorados: %{customdata[1]}<br><br><i>%{customdata[0]}</i><extra></extra>")
         fig_scatter.add_vline(x=taxa_abertura_global, line_dash="dot", line_color="red")
         fig_scatter.add_hline(y=ctor_global, line_dash="dot", line_color="red")
-        fig_scatter.update_layout(xaxis_tickformat='.1%', yaxis_tickformat='.1%', margin=dict(l=0, r=0, t=30, b=0))
+        fig_scatter.update_layout(xaxis_tickformat='.2%', yaxis_tickformat='.2%', margin=dict(l=0, r=0, t=30, b=0))
         st.plotly_chart(fig_scatter, use_container_width=True)
 
     st.subheader("Auditoria de Campanhas")
     st.dataframe(
         mai_filt[['Data de Envio', 'Título', 'Tag Produto', 'Qtd Enviados', 'Aberturas_Abs', 'Cliques_Abs', 'Taxa de Abertura', 'CTOR']].sort_values('CTOR', ascending=False),
-        column_config={"Taxa de Abertura": st.column_config.NumberColumn(format="%.1f%%"), "CTOR": st.column_config.NumberColumn(format="%.1f%%")},
+        column_config={"Taxa de Abertura": st.column_config.NumberColumn(format="%.2f%%"), "CTOR": st.column_config.NumberColumn(format="%.2f%%")},
         use_container_width=True, hide_index=True
     )
 
@@ -260,12 +258,12 @@ elif menu == "📝 Blog (SEO)":
         blo_plot, x='Views', y='Tempo da Página', size='Clicks', color='Tag Produto', hover_name='Título Post', 
         color_discrete_map=CORES_PRODUTOS, custom_data=['Tooltip', 'Taxa Conversão Blog']
     )
-    fig.update_traces(hovertemplate="<b>%{hovertext}</b><br>Taxa Conversão: %{customdata[1]:.1%}<br>Views: %{x}<br>Tempo: %{y:.0f}s<br><br>%{customdata[0]}<extra></extra>")
+    fig.update_traces(hovertemplate="<b>%{hovertext}</b><br>Taxa Conversão: %{customdata[1]:.2%}<br>Views: %{x}<br>Tempo: %{y:.0f}s<br><br>%{customdata[0]}<extra></extra>")
     fig.add_hline(y=tempo_global, line_dash="dot", line_color="red")
     st.plotly_chart(fig, use_container_width=True)
 
     st.dataframe(
         blo_filt[['Data', 'Título Post', 'Tag Produto', 'Views', 'Tempo da Página', 'Taxa Conversão Blog', 'URL']].sort_values('Views', ascending=False),
-        column_config={"Taxa Conversão Blog": st.column_config.NumberColumn(format="%.1f%%"), "URL": st.column_config.LinkColumn("🔗 Ler Artigo")},
+        column_config={"Taxa Conversão Blog": st.column_config.NumberColumn(format="%.2f%%"), "URL": st.column_config.LinkColumn("🔗 Ler Artigo")},
         use_container_width=True, hide_index=True
     )
