@@ -31,7 +31,6 @@ def f_br(num, is_pct=False):
     if is_pct: 
         return f"{num * 100:.2f}%".replace('.', ',')
     else:
-        # Formata com separador de milhares BR
         return f"{num:,.0f}".replace(',', 'X').replace('.', ',').replace('X', '.')
 
 # ==========================================
@@ -149,14 +148,12 @@ else:
 if menu == "🌐 Full Blast (Overview)":
     st.title("Impacto Full Blast & Anomaly Detection")
     
-    # KPIs
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Impacto Total (Toques)", f_br(over_f['Tração'].sum()))
     c2.metric("Pico Diário", f_br(over_f.groupby('Data')['Tração'].sum().max()))
     c3.metric("Ticket Médio (Ações/Dia)", f_br(over_f.groupby('Data')['Tração'].sum().mean()))
     c4.metric("Produtos Promovidos", len(over_f['Tag Produto'].unique()))
 
-    # ML: Z-Score Anomaly Detection
     st.markdown("### 🤖 IA Analítica: Picos de Tração")
     evo = over_f.groupby('Data')['Tração'].sum().reset_index()
     if len(evo) > 2:
@@ -193,7 +190,6 @@ elif menu == "💼 LinkedIn (ML Lab)":
     c2.metric("ER Médio", f_br((lin_f['Engajamento'].sum() / lin_f['Seguidores'].sum() if lin_f['Seguidores'].sum() > 0 else 0), True))
     c3.metric("Volume de Posts", f_br(len(lin_f)))
 
-    # ML: Feature Matrix (Proxy)
     st.markdown("### 🤖 IA Analítica: O que funciona melhor?")
     st.info("A matriz abaixo cruza o **Tipo de Conteúdo** com o **Tamanho do Copy** para identificar o 'Ponto Doce' do algoritmo do LinkedIn.")
     
@@ -220,7 +216,6 @@ elif menu == "📧 Mailchimp (Funil)":
 
     st.markdown("---")
     
-    # ML: K-Means Clustering
     st.markdown("### 🤖 IA Analítica: Classificação de Campanhas (K-Means)")
     st.info("Agrupamos suas campanhas em 3 perfis automáticos baseados no comportamento de Abertura e Clique.")
     
@@ -252,7 +247,7 @@ elif menu == "📧 Mailchimp (Funil)":
             mai_plot, x='Taxa de Abertura', y='CTOR', size='Qtd Enviados', color='Cluster (IA)', hover_name='Título',
             custom_data=['Tooltip', 'Ignorados', 'Aberturas_Abs']
         )
-        fig_scat.update_traces(hovertemplate="<b>%{hovertext}</b><br>Abertura: %{x:.2%}<br>CTOR: %{y:.2%}<br>📊 Aberturas: %{customdata[2]}<br><i>%{customdata[0]}</i><extra></extra>")
+        fig_scat.update_traces(hovertemplate="<b>%{hovertext}</b><br>Abertura: %{x:.2%}<br>CTOR: %{y:.2%}<br>📊 Aberturas: %{customdata[2]:,.0f}<br><i>%{customdata[0]}</i><extra></extra>")
         fig_scat.add_vline(x=tx_ab_g, line_dash="dot", line_color="red")
         fig_scat.add_hline(y=ctor_g, line_dash="dot", line_color="red")
         st.plotly_chart(fig_scat, use_container_width=True)
@@ -276,7 +271,6 @@ elif menu == "📝 Blog (SEO & OLS)":
 
     st.markdown("---")
     
-    # ML: Regressão Linear OLS
     st.markdown("### 🤖 IA Analítica: Curva de Retenção")
     st.info("A linha de tendência (OLS) revela se textos mais longos geram, estatisticamente, mais conversão em cliques.")
 
@@ -296,39 +290,3 @@ elif menu == "📝 Blog (SEO & OLS)":
         column_config={"Taxa Conversão": st.column_config.NumberColumn(format="%.2f%%"), "Link": st.column_config.LinkColumn("🔗 Ler")},
         use_container_width=True, hide_index=True
     )
-"""
-
-print("📝 Gerando arquivos locais (app.py e requirements.txt)...")
-with open('app.py', 'w') as f: f.write(codigo_app)
-with open('requirements.txt', 'w') as f:
-    f.write("streamlit\npandas\nnumpy\nplotly\nscikit-learn\nstatsmodels\n")
-
-# ========== 2. ROTINA DE DEPLOY PARA O GITHUB ==========
-import os
-from google.colab import userdata
-
-GITHUB_USER = "m4ik-crtl"
-GITHUB_EMAIL = userdata.get('emailGitHub')
-GITHUB_TOKEN = userdata.get('tokenGitHub')
-REPO_NAME = "indicadores-2026"
-REPO_URL = f"https://{GITHUB_TOKEN}@github.com/{GITHUB_USER}/{REPO_NAME}.git"
-
-print("🧹 Limpando cache antigo...")
-!rm -rf {REPO_NAME}
-
-print("🔄 Sincronizando com o GitHub...")
-!git config --global user.email "{GITHUB_EMAIL}"
-!git config --global user.name "AIQON Bot"
-
-!git clone {REPO_URL}
-!cp app.py {REPO_NAME}/
-!cp requirements.txt {REPO_NAME}/
-!cp -r dataset {REPO_NAME}/
-
-%cd {REPO_NAME}
-!git add .
-!git commit -m "🚀 Deploy ML: Clusters KMeans, OLS, Formato BR e Dicionário de Cores"
-!git push origin main
-%cd ..
-
-print("🎉 SUCESSO! Código enviado. Pode atualizar o seu link do Streamlit!")
