@@ -63,8 +63,10 @@ def carregar_dados():
 
     # --- MAILCHIMP ---
     mai['Tag Produto'] = mai['Título'].apply(tag_produto)
-    mai['Aberturas_Abs'] = (mai['Qtd Enviados'] * mai['Taxa de Abertura']).round().astype(int)
-    mai['Cliques_Abs'] = (mai['Qtd Enviados'] * mai['Clicks']).round().astype(int)
+    
+    # 🛡️ CORREÇÃO APLICADA AQUI: .fillna(0) antes do .astype(int)
+    mai['Aberturas_Abs'] = (mai['Qtd Enviados'] * mai['Taxa de Abertura']).fillna(0).round().astype(int)
+    mai['Cliques_Abs'] = (mai['Qtd Enviados'] * mai['Clicks']).fillna(0).round().astype(int)
 
     mai_grp = mai.groupby(['Título', 'Tag Produto']).agg({
         'Qtd Enviados': 'sum', 'Aberturas_Abs': 'sum', 'Cliques_Abs': 'sum', 'Data de Envio': 'max'
@@ -148,12 +150,14 @@ else:
 if menu == "🌐 Full Blast (Overview)":
     st.title("Impacto Full Blast & Anomaly Detection")
     
+    # KPIs
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Impacto Total (Toques)", f_br(over_f['Tração'].sum()))
-    c2.metric("Pico Diário", f_br(over_f.groupby('Data')['Tração'].sum().max()))
-    c3.metric("Ticket Médio (Ações/Dia)", f_br(over_f.groupby('Data')['Tração'].sum().mean()))
+    c2.metric("Pico Diário", f_br(over_f.groupby('Data')['Tração'].sum().max() if not over_f.empty else 0))
+    c3.metric("Ticket Médio (Ações/Dia)", f_br(over_f.groupby('Data')['Tração'].sum().mean() if not over_f.empty else 0))
     c4.metric("Produtos Promovidos", len(over_f['Tag Produto'].unique()))
 
+    # ML: Z-Score Anomaly Detection
     st.markdown("### 🤖 IA Analítica: Picos de Tração")
     evo = over_f.groupby('Data')['Tração'].sum().reset_index()
     if len(evo) > 2:
@@ -190,12 +194,14 @@ elif menu == "💼 LinkedIn (ML Lab)":
     c2.metric("ER Médio", f_br((lin_f['Engajamento'].sum() / lin_f['Seguidores'].sum() if lin_f['Seguidores'].sum() > 0 else 0), True))
     c3.metric("Volume de Posts", f_br(len(lin_f)))
 
+    # ML: Feature Matrix (Proxy)
     st.markdown("### 🤖 IA Analítica: O que funciona melhor?")
     st.info("A matriz abaixo cruza o **Tipo de Conteúdo** com o **Tamanho do Copy** para identificar o 'Ponto Doce' do algoritmo do LinkedIn.")
     
     ab = lin_f.groupby(['Tipo', 'Tamanho'])['Engajamento'].mean().reset_index()
-    fig = px.density_heatmap(ab, x="Tipo", y="Tamanho", z="Engajamento", text_auto=".1f", color_continuous_scale="Blues")
-    st.plotly_chart(fig, use_container_width=True)
+    if not ab.empty:
+        fig = px.density_heatmap(ab, x="Tipo", y="Tamanho", z="Engajamento", text_auto=".1f", color_continuous_scale="Blues")
+        st.plotly_chart(fig, use_container_width=True)
 
     st.dataframe(
         lin_f[['Data', 'Título', 'Tag Produto', 'Tipo', 'Tamanho', 'Engajamento', 'Taxa Engajamento (ER)', 'Link']].sort_values('Engajamento', ascending=False),
@@ -216,6 +222,7 @@ elif menu == "📧 Mailchimp (Funil)":
 
     st.markdown("---")
     
+    # ML: K-Means Clustering
     st.markdown("### 🤖 IA Analítica: Classificação de Campanhas (K-Means)")
     st.info("Agrupamos suas campanhas em 3 perfis automáticos baseados no comportamento de Abertura e Clique.")
     
@@ -247,7 +254,7 @@ elif menu == "📧 Mailchimp (Funil)":
             mai_plot, x='Taxa de Abertura', y='CTOR', size='Qtd Enviados', color='Cluster (IA)', hover_name='Título',
             custom_data=['Tooltip', 'Ignorados', 'Aberturas_Abs']
         )
-        fig_scat.update_traces(hovertemplate="<b>%{hovertext}</b><br>Abertura: %{x:.2%}<br>CTOR: %{y:.2%}<br>📊 Aberturas: %{customdata[2]:,.0f}<br><i>%{customdata[0]}</i><extra></extra>")
+        fig_scat.update_traces(hovertemplate="<b>%{hovertext}</b><br>Abertura: %{x:.2%}<br>CTOR: %{y:.2%}<br>📊 Aberturas: %{customdata[2]}<br><i>%{customdata[0]}</i><extra></extra>")
         fig_scat.add_vline(x=tx_ab_g, line_dash="dot", line_color="red")
         fig_scat.add_hline(y=ctor_g, line_dash="dot", line_color="red")
         st.plotly_chart(fig_scat, use_container_width=True)
@@ -271,6 +278,7 @@ elif menu == "📝 Blog (SEO & OLS)":
 
     st.markdown("---")
     
+    # ML: Regressão Linear OLS
     st.markdown("### 🤖 IA Analítica: Curva de Retenção")
     st.info("A linha de tendência (OLS) revela se textos mais longos geram, estatisticamente, mais conversão em cliques.")
 
