@@ -5,6 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from sklearn.cluster import KMeans
 from scipy import stats
+import datetime
 
 st.set_page_config(page_title="AIQON | IA Command Center", layout="wide", initial_sidebar_state="expanded")
 
@@ -12,31 +13,31 @@ st.set_page_config(page_title="AIQON | IA Command Center", layout="wide", initia
 # 🎨 IDENTIDADE VISUAL B2B
 # ==========================================
 CORES_PRODUTOS = {
-    'Action1': '#0A66C2',
-    'Netwrix': '#DC2626',
-    '42Crunch': '#F97316',
-    'Ox Security': '#8B5CF6',
-    'Cynet': '#06B6D4',
-    'Easy Inventory': '#F59E0B',
-    'Keepit': '#10B981',
-    'Grip': '#14B8A6',
-    'Manage Engine': '#3B82F6',
-    'Wallarm': '#E11D48',
-    'Institucional / Outros': '#475569'
+    'Action1': '#0A66C2',           
+    'Netwrix': '#DC2626',           
+    '42Crunch': '#F97316',          
+    'Ox Security': '#8B5CF6',       
+    'Cynet': '#06B6D4',             
+    'Easy Inventory': '#F59E0B',    
+    'Keepit': '#10B981',            
+    'Grip': '#14B8A6',              
+    'Manage Engine': '#3B82F6',     
+    'Wallarm': '#E11D48',           
+    'Institucional / Outros': '#475569' 
 }
 
-# 🇧🇷 FORMATADOR BRASILEIRO ESTRITO
 def f_br(num, is_pct=False):
     if pd.isna(num): return "0"
-    if is_pct:
+    if is_pct: 
         return f"{num * 100:.2f}%".replace('.', ',')
     else:
         return f"{num:,.0f}".replace(',', 'X').replace('.', ',').replace('X', '.')
 
 # ==========================================
-# 🧠 MOTOR DE DADOS & DAX
+# 🧠 MOTOR DE DADOS & CACHE INTELIGENTE
 # ==========================================
-@st.cache_data
+# 🛡️ ttl=60 obriga o Streamlit a revalidar os dados a cada 1 minuto!
+@st.cache_data(ttl=60) 
 def carregar_dados():
     lin = pd.read_csv('dataset/linkedin_clean.csv')
     blo = pd.read_csv('dataset/blog_clean.csv')
@@ -118,15 +119,27 @@ def carregar_dados():
 df_over, df_lin, df_blo, df_mai, df_lista = carregar_dados()
 
 # ==========================================
-# SIDEBAR / FILTROS ALLSELECTED
+# SIDEBAR / FILTROS BLINDADOS
 # ==========================================
 st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/c/c3/Python-logo-notext.svg", width=50)
-st.sidebar.title("Comandos")
-menu = st.sidebar.radio("Navegação:", ["🌐 Visão Geral", "💼 LinkedIn", "📧 Mailchimp", "📝 Blog", "🤖 IA & Machine Learning"])
+st.sidebar.title("AIQON Inteligência")
+menu = st.sidebar.radio("Navegação:", ["🌐 Full Blast (Overview)", "💼 LinkedIn (ML Lab)", "📧 Mailchimp (Funil)", "📝 Blog (SEO & OLS)", "🤖 IA & Machine Learning"])
 st.sidebar.markdown("---")
 
-min_d = min(df_over['Data'].min(), df_lin['Data'].min(), df_blo['Data'].min(), df_mai['Data de Envio'].min())
-max_d = max(df_over['Data'].max(), df_lin['Data'].max(), df_blo['Data'].max(), df_mai['Data de Envio'].max())
+# 🛡️ BUSCA DE DATAS SEGURA (Ignora Nulos/Vazios para evitar falhas)
+todas_datas = pd.Series(
+    df_over['Data'].dropna().tolist() + 
+    df_lin['Data'].dropna().tolist() + 
+    df_blo['Data'].dropna().tolist() + 
+    df_mai['Data de Envio'].dropna().tolist()
+)
+
+if not todas_datas.empty:
+    min_d = todas_datas.min()
+    max_d = todas_datas.max()
+else:
+    min_d = datetime.date.today()
+    max_d = datetime.date.today()
 
 datas = st.sidebar.date_input("Filtrar Período", [min_d, max_d], min_value=min_d, max_value=max_d)
 prod_disp = df_over['Tag Produto'].unique().tolist()
@@ -145,15 +158,15 @@ else:
 # MÓDULOS DE RELATÓRIO PADRÃO
 # ==========================================
 
-if menu == "🌐 Visão Geral":
-    st.title("Visão Geral: Impacto da Marca (Full Blast)")
-
+if menu == "🌐 Full Blast (Overview)":
+    st.title("Impacto da Marca (Full Blast)")
+    
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Impacto Total (Toques)", f_br(over_f['Tração'].sum()))
     c2.metric("Pico Diário", f_br(over_f.groupby('Data')['Tração'].sum().max() if not over_f.empty else 0))
     c3.metric("Ticket Médio (Ações/Dia)", f_br(over_f.groupby('Data')['Tração'].sum().mean() if not over_f.empty else 0))
     c4.metric("Produtos Promovidos", len(over_f['Tag Produto'].unique()))
-
+            
     col1, col2 = st.columns([2, 1])
     with col1:
         st.subheader("Evolução Diária do Barulho")
@@ -172,8 +185,8 @@ if menu == "🌐 Visão Geral":
     st.subheader("Lista Mestra de Ativos")
     st.dataframe(lista_f, column_config={"Link": st.column_config.LinkColumn("🔗 Abrir Origem"), "Cliques/Tração": st.column_config.NumberColumn(format="%d")}, use_container_width=True, hide_index=True)
 
-elif menu == "💼 LinkedIn":
-    st.title("LinkedIn: Desempenho Básico")
+elif menu == "💼 LinkedIn (ML Lab)":
+    st.title("LinkedIn: Desempenho e IA")
     c1, c2, c3 = st.columns(3)
     c1.metric("Média Engajamento/Post", f_br(lin_f['Engajamento'].mean()))
     c2.metric("ER Médio", f_br((lin_f['Engajamento'].sum() / lin_f['Seguidores'].sum() if lin_f['Seguidores'].sum() > 0 else 0), True))
@@ -188,8 +201,8 @@ elif menu == "💼 LinkedIn":
     st.dataframe(lin_f[['Data', 'Título', 'Tag Produto', 'Tipo', 'Tamanho', 'Engajamento', 'Taxa Engajamento (ER)', 'Link']].sort_values('Engajamento', ascending=False),
                  column_config={"Taxa Engajamento (ER)": st.column_config.NumberColumn(format="%.2f%%"), "Link": st.column_config.LinkColumn("🔗 Ver")}, use_container_width=True, hide_index=True)
 
-elif menu == "📧 Mailchimp":
-    st.title("Mailchimp: Funil de Retenção")
+elif menu == "📧 Mailchimp (Funil)":
+    st.title("Mailchimp: Conversão")
     ctor_g = mai_f['Cliques_Abs'].sum() / mai_f['Aberturas_Abs'].sum() if mai_f['Aberturas_Abs'].sum() > 0 else 0
     tx_ab_g = mai_f['Aberturas_Abs'].sum() / mai_f['Qtd Enviados'].sum() if mai_f['Qtd Enviados'].sum() > 0 else 0
 
@@ -210,7 +223,7 @@ elif menu == "📧 Mailchimp":
         st.plotly_chart(fig_funil, use_container_width=True)
 
     with col2:
-        st.subheader("Abertura vs CTOR (Desempenho)")
+        st.subheader("Abertura vs CTOR")
         mai_plot = mai_f.copy()
         mai_plot['Diff CTOR'] = np.where(ctor_g==0, 0, (mai_plot['CTOR'] - ctor_g) / ctor_g)
         mai_plot['Tooltip'] = "CTOR: " + (mai_plot['Diff CTOR']*100).map('{:+.2f}%'.format).str.replace('.', ',') + " da média."
@@ -225,7 +238,7 @@ elif menu == "📧 Mailchimp":
     st.dataframe(mai_f[['Data de Envio', 'Título', 'Tag Produto', 'Qtd Enviados', 'Taxa de Abertura', 'CTOR']].sort_values('CTOR', ascending=False),
                  column_config={"Taxa de Abertura": st.column_config.NumberColumn(format="%.2f%%"), "CTOR": st.column_config.NumberColumn(format="%.2f%%")}, use_container_width=True, hide_index=True)
 
-elif menu == "📝 Blog":
+elif menu == "📝 Blog (SEO & OLS)":
     st.title("Blog: Retenção Orgânica")
     tempo_g = blo_f['Tempo da Página'].mean() if not blo_f.empty else 0
     tx_conv_g = blo_f['Clicks'].sum() / blo_f['Views'].sum() if blo_f['Views'].sum() > 0 else 0
@@ -240,7 +253,7 @@ elif menu == "📝 Blog":
     blo_plot['Diff Retencao'] = np.where(tempo_g==0, 0, (blo_plot['Tempo da Página'] - tempo_g) / tempo_g)
     blo_plot['Tooltip'] = "Retenção: " + (blo_plot['Diff Retencao']*100).map('{:+.1f}%'.format).str.replace('.', ',') + " da média."
 
-    fig = px.scatter(blo_plot, x='Tempo da Página', y='Taxa Conversão', size='Views', color='Tag Produto', hover_name='Título',
+    fig = px.scatter(blo_plot, x='Tempo da Página', y='Taxa Conversão', size='Views', color='Tag Produto', hover_name='Título', 
                      color_discrete_map=CORES_PRODUTOS, custom_data=['Tooltip', 'Views'])
     fig.update_traces(hovertemplate="<b>%{hovertext}</b><br>Tempo: %{x}s<br>Conversão: %{y:.2%}<br>👀 Views: %{customdata[1]}<br><i>%{customdata[0]}</i><extra></extra>")
     st.plotly_chart(fig, use_container_width=True)
@@ -261,70 +274,60 @@ elif menu == "🤖 IA & Machine Learning":
     else:
         # 1. Anomaly Detection (Z-Score)
         st.header("1. Radar de Anomalias (Z-Score)")
-        st.markdown("A IA analisa a série histórica para separar os conteúdos que **viralizaram** daqueles que foram para a **geladeira** (baixo engajamento anormal).")
-
+        st.markdown("A IA analisa a série histórica para separar os conteúdos que **viralizaram** daqueles que foram para a **geladeira**.")
+        
         evo = over_f.groupby('Data')['Tração'].sum().reset_index()
         if len(evo) > 2:
             z_scores = stats.zscore(evo['Tração'])
             evo['Z-Score'] = z_scores
-
-            dias_virais = evo[evo['Z-Score'] > 1.0] # Picos acima do desvio
-            dias_frios = evo[evo['Z-Score'] < -1.0] # Quedas severas
-
+            
+            dias_virais = evo[evo['Z-Score'] > 1.0]
+            dias_frios = evo[evo['Z-Score'] < -1.0]
+            
             col_v, col_f = st.columns(2)
             with col_v:
                 st.success(f"🚀 **{len(dias_virais)} Pico(s) Viral(is)** detectado(s).")
                 if not dias_virais.empty:
-                    # Filtra a lista mestra para mostrar o que gerou o pico
                     lista_virais = lista_f[lista_f['Data'].isin(dias_virais['Data'])].sort_values('Cliques/Tração', ascending=False)
                     st.dataframe(lista_virais[['Data', 'Plataforma', 'Título']], hide_index=True, use_container_width=True)
-
+            
             with col_f:
-                st.error(f"🧊 **{len(dias_frios)} Dia(s) Frio(s)** detectado(s) (Abaixo da média).")
+                st.error(f"🧊 **{len(dias_frios)} Dia(s) Frio(s)** detectado(s).")
                 if not dias_frios.empty:
                     lista_frios = lista_f[lista_f['Data'].isin(dias_frios['Data'])].sort_values('Cliques/Tração', ascending=True)
                     st.dataframe(lista_frios[['Data', 'Plataforma', 'Título']], hide_index=True, use_container_width=True)
         else:
             st.info("Volume de dias insuficiente para calcular anomalias estáticas. Expanda o filtro de datas.")
-
+            
         st.markdown("---")
 
         # 2. KMeans (Clusterização de E-mail)
         st.header("2. Clusterização de Audiência (K-Means)")
-        st.markdown("O algoritmo K-Means agrupou automaticamente suas campanhas de **Mailchimp** de acordo com o padrão de comportamento dos MSPs/Revendas.")
-
+        
         if len(mai_f) > 3:
             kmeans = KMeans(n_clusters=3, random_state=42, n_init=10)
             X = mai_f[['Taxa de Abertura', 'CTOR']].fillna(0)
             mai_f['Cluster (IA)'] = kmeans.fit_predict(X)
-            # Ordenando os clusters para garantir que o 0 seja o pior e o 2 o melhor, ou vice-versa
             centroides = kmeans.cluster_centers_
-            # Cria um mapeamento baseado na soma (Abertura + CTOR)
             soma_centroides = centroides.sum(axis=1)
             ranking_clusters = soma_centroides.argsort()
             mapa = {ranking_clusters[0]: 'Baixa Atenção ⚠️', ranking_clusters[1]: 'Média 📉', ranking_clusters[2]: 'Estrela 🚀'}
             mai_f['Classificação IA'] = mai_f['Cluster (IA)'].map(mapa)
 
-            fig_km = px.scatter(
-                mai_f, x='Taxa de Abertura', y='CTOR', color='Classificação IA', size='Qtd Enviados', hover_name='Título',
-                color_discrete_map={'Estrela 🚀': '#10B981', 'Média 📉': '#F59E0B', 'Baixa Atenção ⚠️': '#DC2626'}
-            )
+            fig_km = px.scatter(mai_f, x='Taxa de Abertura', y='CTOR', color='Classificação IA', size='Qtd Enviados', hover_name='Título',
+                                color_discrete_map={'Estrela 🚀': '#10B981', 'Média 📉': '#F59E0B', 'Baixa Atenção ⚠️': '#DC2626'})
             fig_km.update_layout(xaxis_tickformat='.1%', yaxis_tickformat='.1%')
             st.plotly_chart(fig_km, use_container_width=True)
         else:
-            st.info("E-mails insuficientes para treinar o K-Means. O modelo precisa de pelo menos 4 campanhas diferentes.")
+            st.info("E-mails insuficientes para treinar o K-Means (Mín. 4 campanhas).")
 
         st.markdown("---")
 
         # 3. OLS Regression (Regressão no Blog)
         st.header("3. Previsibilidade de Conversão (OLS Regression)")
-        st.markdown("Traçamos uma Regressão Linear sobre o tráfego do **Blog**. O objetivo é provar estatisticamente se a retenção (tempo lendo) resulta diretamente em conversão (cliques).")
-
         if len(blo_f) > 2:
-            fig_ols = px.scatter(
-                blo_f, x='Tempo da Página', y='Taxa Conversão', size='Views', color='Tag Produto', hover_name='Título',
-                color_discrete_map=CORES_PRODUTOS, trendline="ols", trendline_scope="overall"
-            )
+            fig_ols = px.scatter(blo_f, x='Tempo da Página', y='Taxa Conversão', size='Views', color='Tag Produto', hover_name='Título', 
+                                 color_discrete_map=CORES_PRODUTOS, trendline="ols", trendline_scope="overall")
             fig_ols.update_traces(hovertemplate="Tempo: %{x}s<br>Conversão: %{y:.2%}<extra></extra>")
             st.plotly_chart(fig_ols, use_container_width=True)
         else:
@@ -334,8 +337,6 @@ elif menu == "🤖 IA & Machine Learning":
 
         # 4. Feature Matrix (LinkedIn)
         st.header("4. Matriz de Densidade (LinkedIn)")
-        st.markdown("Mapa de calor que cruza variáveis qualitativas (Tamanho do Texto vs Estilo) para achar a **Fórmula de Copy** que o algoritmo do LinkedIn mais entrega.")
-
         ab = lin_f.groupby(['Tipo', 'Tamanho'])['Engajamento'].mean().reset_index()
         if not ab.empty:
             fig_hm = px.density_heatmap(ab, x="Tipo", y="Tamanho", z="Engajamento", text_auto=".1f", color_continuous_scale="Blues")
