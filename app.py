@@ -121,7 +121,7 @@ df_over, df_lin, df_blo, df_mai, df_lista = carregar_dados()
 # ==========================================
 # SIDEBAR / FILTROS BLINDADOS
 # ==========================================
-st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/c/c3/Python-logo-notext.svg", width=50)
+st.sidebar.image("/dataset/slogan.png", width=100)
 st.sidebar.title("AIQON Inteligência")
 menu = st.sidebar.radio("Navegação:", ["🌐 Full Blast (Overview)", "💼 LinkedIn (ML Lab)", "📧 Mailchimp (Funil)", "📝 Blog (SEO & OLS)", "🤖 IA & Machine Learning"])
 st.sidebar.markdown("---")
