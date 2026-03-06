@@ -13,22 +13,22 @@ st.set_page_config(page_title="AIQON | IA Command Center", layout="wide", initia
 # 🎨 IDENTIDADE VISUAL B2B
 # ==========================================
 CORES_PRODUTOS = {
-    'Action1': '#0A66C2',           
-    'Netwrix': '#DC2626',           
-    '42Crunch': '#F97316',          
-    'Ox Security': '#8B5CF6',       
-    'Cynet': '#06B6D4',             
-    'Easy Inventory': '#F59E0B',    
-    'Keepit': '#10B981',            
-    'Grip': '#14B8A6',              
-    'Manage Engine': '#3B82F6',     
-    'Wallarm': '#E11D48',           
-    'Institucional / Outros': '#475569' 
+    'Action1': '#0A66C2',
+    'Netwrix': '#DC2626',
+    '42Crunch': '#F97316',
+    'Ox Security': '#8B5CF6',
+    'Cynet': '#06B6D4',
+    'Easy Inventory': '#F59E0B',
+    'Keepit': '#10B981',
+    'Grip': '#14B8A6',
+    'Manage Engine': '#3B82F6',
+    'Wallarm': '#E11D48',
+    'Institucional / Outros': '#475569'
 }
 
 def f_br(num, is_pct=False):
     if pd.isna(num): return "0"
-    if is_pct: 
+    if is_pct:
         return f"{num * 100:.2f}%".replace('.', ',')
     else:
         return f"{num:,.0f}".replace(',', 'X').replace('.', ',').replace('X', '.')
@@ -37,7 +37,7 @@ def f_br(num, is_pct=False):
 # 🧠 MOTOR DE DADOS & CACHE INTELIGENTE
 # ==========================================
 # 🛡️ ttl=60 obriga o Streamlit a revalidar os dados a cada 1 minuto!
-@st.cache_data(ttl=60) 
+@st.cache_data(ttl=60)
 def carregar_dados():
     lin = pd.read_csv('dataset/linkedin_clean.csv')
     blo = pd.read_csv('dataset/blog_clean.csv')
@@ -128,9 +128,9 @@ st.sidebar.markdown("---")
 
 # 🛡️ BUSCA DE DATAS SEGURA (Ignora Nulos/Vazios para evitar falhas)
 todas_datas = pd.Series(
-    df_over['Data'].dropna().tolist() + 
-    df_lin['Data'].dropna().tolist() + 
-    df_blo['Data'].dropna().tolist() + 
+    df_over['Data'].dropna().tolist() +
+    df_lin['Data'].dropna().tolist() +
+    df_blo['Data'].dropna().tolist() +
     df_mai['Data de Envio'].dropna().tolist()
 )
 
@@ -160,13 +160,13 @@ else:
 
 if menu == "🌐 Full Blast (Overview)":
     st.title("Impacto da Marca (Full Blast)")
-    
+
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Impacto Total (Toques)", f_br(over_f['Tração'].sum()))
     c2.metric("Pico Diário", f_br(over_f.groupby('Data')['Tração'].sum().max() if not over_f.empty else 0))
     c3.metric("Ticket Médio (Ações/Dia)", f_br(over_f.groupby('Data')['Tração'].sum().mean() if not over_f.empty else 0))
     c4.metric("Produtos Promovidos", len(over_f['Tag Produto'].unique()))
-            
+
     col1, col2 = st.columns([2, 1])
     with col1:
         st.subheader("Evolução Diária do Barulho")
@@ -253,7 +253,7 @@ elif menu == "📝 Blog (SEO & OLS)":
     blo_plot['Diff Retencao'] = np.where(tempo_g==0, 0, (blo_plot['Tempo da Página'] - tempo_g) / tempo_g)
     blo_plot['Tooltip'] = "Retenção: " + (blo_plot['Diff Retencao']*100).map('{:+.1f}%'.format).str.replace('.', ',') + " da média."
 
-    fig = px.scatter(blo_plot, x='Tempo da Página', y='Taxa Conversão', size='Views', color='Tag Produto', hover_name='Título', 
+    fig = px.scatter(blo_plot, x='Tempo da Página', y='Taxa Conversão', size='Views', color='Tag Produto', hover_name='Título',
                      color_discrete_map=CORES_PRODUTOS, custom_data=['Tooltip', 'Views'])
     fig.update_traces(hovertemplate="<b>%{hovertext}</b><br>Tempo: %{x}s<br>Conversão: %{y:.2%}<br>👀 Views: %{customdata[1]}<br><i>%{customdata[0]}</i><extra></extra>")
     st.plotly_chart(fig, use_container_width=True)
@@ -275,22 +275,22 @@ elif menu == "🤖 IA & Machine Learning":
         # 1. Anomaly Detection (Z-Score)
         st.header("1. Radar de Anomalias (Z-Score)")
         st.markdown("A IA analisa a série histórica para separar os conteúdos que **viralizaram** daqueles que foram para a **geladeira**.")
-        
+
         evo = over_f.groupby('Data')['Tração'].sum().reset_index()
         if len(evo) > 2:
             z_scores = stats.zscore(evo['Tração'])
             evo['Z-Score'] = z_scores
-            
+
             dias_virais = evo[evo['Z-Score'] > 1.0]
             dias_frios = evo[evo['Z-Score'] < -1.0]
-            
+
             col_v, col_f = st.columns(2)
             with col_v:
                 st.success(f"🚀 **{len(dias_virais)} Pico(s) Viral(is)** detectado(s).")
                 if not dias_virais.empty:
                     lista_virais = lista_f[lista_f['Data'].isin(dias_virais['Data'])].sort_values('Cliques/Tração', ascending=False)
                     st.dataframe(lista_virais[['Data', 'Plataforma', 'Título']], hide_index=True, use_container_width=True)
-            
+
             with col_f:
                 st.error(f"🧊 **{len(dias_frios)} Dia(s) Frio(s)** detectado(s).")
                 if not dias_frios.empty:
@@ -298,12 +298,12 @@ elif menu == "🤖 IA & Machine Learning":
                     st.dataframe(lista_frios[['Data', 'Plataforma', 'Título']], hide_index=True, use_container_width=True)
         else:
             st.info("Volume de dias insuficiente para calcular anomalias estáticas. Expanda o filtro de datas.")
-            
+
         st.markdown("---")
 
         # 2. KMeans (Clusterização de E-mail)
         st.header("2. Clusterização de Audiência (K-Means)")
-        
+
         if len(mai_f) > 3:
             kmeans = KMeans(n_clusters=3, random_state=42, n_init=10)
             X = mai_f[['Taxa de Abertura', 'CTOR']].fillna(0)
@@ -326,7 +326,7 @@ elif menu == "🤖 IA & Machine Learning":
         # 3. OLS Regression (Regressão no Blog)
         st.header("3. Previsibilidade de Conversão (OLS Regression)")
         if len(blo_f) > 2:
-            fig_ols = px.scatter(blo_f, x='Tempo da Página', y='Taxa Conversão', size='Views', color='Tag Produto', hover_name='Título', 
+            fig_ols = px.scatter(blo_f, x='Tempo da Página', y='Taxa Conversão', size='Views', color='Tag Produto', hover_name='Título',
                                  color_discrete_map=CORES_PRODUTOS, trendline="ols", trendline_scope="overall")
             fig_ols.update_traces(hovertemplate="Tempo: %{x}s<br>Conversão: %{y:.2%}<extra></extra>")
             st.plotly_chart(fig_ols, use_container_width=True)
