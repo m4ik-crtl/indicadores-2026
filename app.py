@@ -15,8 +15,9 @@ st.set_page_config(
 )
 
 # ============================================================
-# 🎨 TEMA VISUAL — AIQON B2B Dark Command Center
+# 🎨 TEMA VISUAL — Adaptável Light/Dark Mode
 # ============================================================
+# Ao usar var(--variable), o Streamlit alterna as cores automaticamente
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
@@ -25,63 +26,55 @@ html, body, [class*="css"] {
     font-family: 'DM Sans', sans-serif;
 }
 
-/* Fundo geral */
-.stApp { background-color: #0D1117; }
-
-/* Sidebar */
-section[data-testid="stSidebar"] {
-    background-color: #161B22;
-    border-right: 1px solid #21262D;
-}
-section[data-testid="stSidebar"] * { color: #E6EDF3 !important; }
-
 /* Métricas */
 [data-testid="metric-container"] {
-    background: #161B22;
-    border: 1px solid #21262D;
+    background-color: var(--secondary-background-color);
+    border: 1px solid rgba(128, 128, 128, 0.2);
     border-radius: 12px;
     padding: 16px 20px;
 }
-[data-testid="metric-container"] label { color: #7D8590 !important; font-size: 0.78rem !important; text-transform: uppercase; letter-spacing: 0.08em; }
-[data-testid="metric-container"] [data-testid="stMetricValue"] { color: #E6EDF3 !important; font-size: 1.7rem !important; font-weight: 700; }
-[data-testid="metric-container"] [data-testid="stMetricDelta"] { font-size: 0.78rem !important; }
+[data-testid="metric-container"] label { 
+    font-size: 0.78rem !important; 
+    text-transform: uppercase; 
+    letter-spacing: 0.08em; 
+}
+[data-testid="metric-container"] [data-testid="stMetricValue"] { 
+    font-size: 1.7rem !important; 
+    font-weight: 700; 
+}
 
-/* Texto geral */
-h1 { color: #E6EDF3 !important; font-weight: 700 !important; font-size: 1.6rem !important; letter-spacing: -0.02em; }
-h2, h3 { color: #C9D1D9 !important; font-weight: 600 !important; }
-p, li, span, label { color: #8B949E !important; }
-
-/* Tabelas */
-[data-testid="stDataFrame"] { border: 1px solid #21262D; border-radius: 12px; overflow: hidden; }
-
-/* Cards informativos */
-.info-card {
-    background: #161B22;
-    border: 1px solid #21262D;
+/* Cards informativos e Caixas Explicativas */
+.info-card, .explain-box {
+    background-color: var(--secondary-background-color);
+    border: 1px solid rgba(128, 128, 128, 0.2);
     border-left: 3px solid #0094A4;
     border-radius: 8px;
     padding: 14px 18px;
     margin: 8px 0;
 }
-.info-card p { color: #8B949E !important; font-size: 0.88rem !important; margin: 0; }
-.info-card strong { color: #C9D1D9 !important; }
-
-/* Seção explicativa */
 .explain-box {
-    background: linear-gradient(135deg, #161B22 0%, #1C2128 100%);
-    border: 1px solid #21262D;
     border-radius: 12px;
     padding: 18px 24px;
     margin-bottom: 20px;
+    border-left: 1px solid rgba(128, 128, 128, 0.2);
 }
-.explain-box h4 { color: #0094A4 !important; font-size: 0.85rem !important; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
-.explain-box p { color: #8B949E !important; font-size: 0.9rem !important; line-height: 1.6; margin: 0; }
+.explain-box h4 { 
+    color: #0094A4 !important; 
+    font-size: 0.85rem !important; 
+    text-transform: uppercase; 
+    letter-spacing: 0.1em; 
+    margin-bottom: 6px; 
+}
+.explain-box p, .info-card p { 
+    font-size: 0.9rem !important; 
+    line-height: 1.6; 
+    margin: 0; 
+}
 
-/* Divider */
-hr { border-color: #21262D !important; }
-
-/* Plotly charts */
+/* Tabelas e Gráficos */
+[data-testid="stDataFrame"] { border: 1px solid rgba(128, 128, 128, 0.2); border-radius: 12px; overflow: hidden; }
 .js-plotly-plot { border-radius: 12px; }
+hr { border-color: rgba(128, 128, 128, 0.2) !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -89,29 +82,14 @@ hr { border-color: #21262D !important; }
 # 🔧 CONFIGURAÇÕES
 # ============================================================
 CORES_PRODUTOS = {
-    'Action1': '#0A66C2',
-    'Netwrix': '#DC2626',
-    '42Crunch': '#F97316',
-    'Ox Security': '#8B5CF6',
-    'Cynet': '#06B6D4',
-    'Easy Inventory': '#F59E0B',
-    'Keepit': '#10B981',
-    'Grip': '#14B8A6',
-    'Manage Engine': '#3B82F6',
-    'Wallarm': '#E11D48',
-    'Institucional / Outros': '#475569',
-    'Syxsense': '#A855F7'
+    'Action1': '#0A66C2', 'Netwrix': '#DC2626', '42Crunch': '#F97316',
+    'Ox Security': '#8B5CF6', 'Cynet': '#06B6D4', 'Easy Inventory': '#F59E0B',
+    'Keepit': '#10B981', 'Grip': '#14B8A6', 'Manage Engine': '#3B82F6',
+    'Wallarm': '#E11D48', 'Institucional / Outros': '#475569', 'Syxsense': '#A855F7'
 }
 
-PLOTLY_LAYOUT = dict(
-    paper_bgcolor='rgba(0,0,0,0)',
-    plot_bgcolor='rgba(0,0,0,0)',
-    font=dict(family='DM Sans', color='#8B949E', size=12),
-    xaxis=dict(gridcolor='#21262D', linecolor='#30363D', tickfont=dict(color='#8B949E')),
-    yaxis=dict(gridcolor='#21262D', linecolor='#30363D', tickfont=dict(color='#8B949E')),
-    legend=dict(bgcolor='rgba(0,0,0,0)', font=dict(color='#C9D1D9')),
-    margin=dict(l=10, r=10, t=30, b=10),
-)
+# Layout base limpo (o theme="streamlit" vai cuidar das cores dinamicamente depois)
+PLOTLY_LAYOUT = dict(margin=dict(l=10, r=10, t=30, b=10))
 
 def f_br(num, is_pct=False):
     if pd.isna(num): return "0"
@@ -128,32 +106,20 @@ def criar_fig(fig):
 # 🏷️ SISTEMA DE TAGS AUTOMÁTICO
 # ============================================================
 TAGS_TIPO = {
-    'Produto': ['action1', 'netwrix', '42crunch', 'ox ', 'cynet', 'easy inventory',
-                'keepit', 'grip', 'manage engine', 'wallarm', 'syxsense', 'lançamento', 'release', 'solução'],
-    'Notícia': ['alerta', 'cve-', 'vulnerabilidade', 'ataque', 'ransomware', 'breach',
-                'vazamento', 'news', 'urgente', 'incidente', 'crise'],
-    'Conceito': ['o que é', 'como funciona', 'guia', 'entenda', 'conceito', 'introdução',
-                 'fundamentos', 'overview', 'explicando', 'por que'],
-    'Campanha / Ebook': ['ebook', 'download', 'checklist', 'whitepaper', 'webinar',
-                         'evento', 'live', 'inscreva', 'acesse grátis', 'material'],
-    'Comercial': ['parceria', 'cliente', 'case', 'resultado', 'roi', 'demonstração',
-                  'demo', 'contrate', 'venda', 'oferta'],
+    'Produto': ['action1', 'netwrix', '42crunch', 'ox ', 'cynet', 'easy inventory', 'keepit', 'grip', 'manage engine', 'wallarm', 'syxsense', 'lançamento', 'release', 'solução'],
+    'Notícia': ['alerta', 'cve-', 'vulnerabilidade', 'ataque', 'ransomware', 'breach', 'vazamento', 'news', 'urgente', 'incidente', 'crise'],
+    'Conceito': ['o que é', 'como funciona', 'guia', 'entenda', 'conceito', 'introdução', 'fundamentos', 'overview', 'explicando', 'por que'],
+    'Campanha / Ebook': ['ebook', 'download', 'checklist', 'whitepaper', 'webinar', 'evento', 'live', 'inscreva', 'acesse grátis', 'material'],
+    'Comercial': ['parceria', 'cliente', 'case', 'resultado', 'roi', 'demonstração', 'demo', 'contrate', 'venda', 'oferta'],
 }
 
 def detectar_tags(texto):
     texto_l = str(texto).lower()
-    tags = []
-    for tag, palavras in TAGS_TIPO.items():
-        if any(p in texto_l for p in palavras):
-            tags.append(tag)
-    if not tags:
-        tags.append('Editorial / Educativo')
-    return tags
+    tags = [tag for tag, palavras in TAGS_TIPO.items() if any(p in texto_l for p in palavras)]
+    return tags if tags else ['Editorial / Educativo']
 
 def tags_para_str(tags_list):
-    if isinstance(tags_list, list):
-        return ', '.join(tags_list)
-    return str(tags_list)
+    return ', '.join(tags_list) if isinstance(tags_list, list) else str(tags_list)
 
 def tag_produto(t):
     t = str(t).lower()
@@ -180,7 +146,6 @@ def carregar_dados():
         blo = pd.read_csv('dataset/blog_clean.csv')
         mai = pd.read_csv('dataset/mailchimp_clean.csv')
     except:
-        # Fallback (Mock Data) para rodar a aplicação mesmo sem CSVs na pasta
         hoje = pd.Timestamp.today()
         lin = pd.DataFrame({'Data da postagem': [hoje, hoje - pd.Timedelta(days=1), hoje - pd.Timedelta(days=1)], 'Texto': ['O que é a nova solução da Netwrix?', 'Baixe nosso ebook sobre Action1', 'O que é a nova solução da Netwrix?'], 'Link da Postagem': ['link1', 'link2', 'link1'], 'Curtidas': [45, 120, 20], 'Comentários': [5, 15, 2], 'Shares': [2, 10, 1], 'Seguidores': [5000, 5000, 5000]})
         blo = pd.DataFrame({'Data': [hoje, hoje - pd.Timedelta(days=2)], 'URL': ['https://aiqon.com.br/blog/guia-netwrix', 'https://aiqon.com.br/blog/cynet-news'], 'Views': [350, 150], 'Clicks': [25, 5], 'Tempo da Página': [210, 90]})
@@ -196,26 +161,20 @@ def carregar_dados():
     mai['Aberturas_Abs'] = (mai['Qtd Enviados'] * mai['Taxa de Abertura']).fillna(0).round().astype(int)
     mai['Cliques_Abs'] = (mai['Qtd Enviados'] * mai['Clicks']).fillna(0).round().astype(int)
 
-    mai_grp = mai.groupby(['Título', 'Tag Produto', 'Tags Tipo']).agg({
-        'Qtd Enviados': 'sum', 'Aberturas_Abs': 'sum', 'Cliques_Abs': 'sum', 'Data de Envio': 'max'
-    }).reset_index()
+    mai_grp = mai.groupby(['Título', 'Tag Produto', 'Tags Tipo']).agg({'Qtd Enviados': 'sum', 'Aberturas_Abs': 'sum', 'Cliques_Abs': 'sum', 'Data de Envio': 'max'}).reset_index()
     mai_grp['Taxa de Abertura'] = np.where(mai_grp['Qtd Enviados'] == 0, 0, mai_grp['Aberturas_Abs'] / mai_grp['Qtd Enviados'])
     mai_grp['CTOR'] = np.where(mai_grp['Aberturas_Abs'] == 0, 0, mai_grp['Cliques_Abs'] / mai_grp['Aberturas_Abs'])
     mai_grp['Ignorados'] = mai_grp['Qtd Enviados'] - mai_grp['Aberturas_Abs']
-    mai_grp['Plataforma'] = 'Mailchimp'
-    mai_grp['Link'] = 'N/A'
+    mai_grp['Plataforma'], mai_grp['Link'] = 'Mailchimp', 'N/A'
 
     # ---------- BLOG ----------
     blo['Tag Produto'] = blo['URL'].apply(tag_produto)
     blo['Tags Tipo'] = blo['URL'].apply(lambda x: tags_para_str(detectar_tags(x)))
     blo['Título'] = (blo['URL'].str.replace("https://aiqon.com.br/blog/", "", regex=False).str.replace("/", "", regex=False).str.replace("-", " ").str.title())
 
-    blo_grp = blo.groupby(['URL', 'Título', 'Tag Produto', 'Tags Tipo']).agg({
-        'Views': 'sum', 'Clicks': 'sum', 'Tempo da Página': 'mean', 'Data': 'max'
-    }).reset_index()
+    blo_grp = blo.groupby(['URL', 'Título', 'Tag Produto', 'Tags Tipo']).agg({'Views': 'sum', 'Clicks': 'sum', 'Tempo da Página': 'mean', 'Data': 'max'}).reset_index()
     blo_grp['Taxa Conversão'] = np.where(blo_grp['Views'] == 0, 0, blo_grp['Clicks'] / blo_grp['Views'])
-    blo_grp['Plataforma'] = 'Blog'
-    blo_grp['Link'] = blo_grp['URL']
+    blo_grp['Plataforma'], blo_grp['Link'] = 'Blog', blo_grp['URL']
 
     # ---------- LINKEDIN ----------
     lin['Tag Produto'] = lin['Texto'].apply(tag_produto)
@@ -224,22 +183,17 @@ def carregar_dados():
     lin['Tipo'] = np.where(lin['Texto'].str.contains('parceria|solução|contrat|demo|demonstr', case=False, na=False), 'Comercial/Venda', 'Editorial/Educativo')
     lin['Engajamento'] = (lin['Curtidas'].fillna(0) + lin['Comentários'].fillna(0) + lin['Shares'].fillna(0))
 
-    lin_raw = lin.copy()
-    lin_raw = lin_raw.sort_values(['Link da Postagem', 'Data'])
+    lin_raw = lin.copy().sort_values(['Link da Postagem', 'Data'])
     lin_raw['Engajamento Acum'] = lin_raw.groupby('Link da Postagem')['Engajamento'].cumsum()
     lin_raw['Medicao_Nr'] = lin_raw.groupby('Link da Postagem').cumcount() + 1
 
-    lin_grp = lin.groupby(['Link da Postagem', 'Título', 'Tag Produto', 'Tags Tipo', 'Tamanho', 'Tipo']).agg({
-        'Seguidores': 'max', 'Data': 'max', 'Engajamento': 'sum'
-    }).reset_index()
+    lin_grp = lin.groupby(['Link da Postagem', 'Título', 'Tag Produto', 'Tags Tipo', 'Tamanho', 'Tipo']).agg({'Seguidores': 'max', 'Data': 'max', 'Engajamento': 'sum'}).reset_index()
     lin_grp['Taxa Engajamento (ER)'] = np.where(lin_grp['Seguidores'] == 0, 0, lin_grp['Engajamento'] / lin_grp['Seguidores'])
-    lin_grp['Plataforma'] = 'LinkedIn'
-    lin_grp['Link'] = lin_grp['Link da Postagem']
+    lin_grp['Plataforma'], lin_grp['Link'] = 'LinkedIn', lin_grp['Link da Postagem']
 
     def detectar_padrao(grupo):
         if len(grupo) < 2: return 'Dado Único'
-        vals = grupo.sort_values('Data')['Engajamento'].values
-        diffs = np.diff(vals)
+        diffs = np.diff(grupo.sort_values('Data')['Engajamento'].values)
         if diffs[0] > 0 and all(d <= 0 for d in diffs[1:]): return 'Spike Inicial 🚀'
         elif all(d >= 0 for d in diffs): return 'Crescimento Constante 📈'
         elif diffs[-1] < 0 and diffs[0] < 0: return 'Queda Rápida 📉'
@@ -255,8 +209,7 @@ def carregar_dados():
     r_blo = blo_grp.groupby(['Data', 'Tag Produto'])['Views'].sum().reset_index().rename(columns={'Views': 'Tração'})
     r_mai = mai_grp.groupby(['Data de Envio', 'Tag Produto'])['Aberturas_Abs'].sum().reset_index().rename(columns={'Data de Envio': 'Data', 'Aberturas_Abs': 'Tração'})
 
-    over = pd.concat([r_lin, r_blo, r_mai]).groupby(['Data', 'Tag Produto'])['Tração'].sum().reset_index()
-    over = over.sort_values('Data')
+    over = pd.concat([r_lin, r_blo, r_mai]).groupby(['Data', 'Tag Produto'])['Tração'].sum().reset_index().sort_values('Data')
 
     lista = pd.concat([
         lin_grp[['Data', 'Título', 'Plataforma', 'Link', 'Tag Produto', 'Tags Tipo', 'Engajamento']].rename(columns={'Engajamento': 'Cliques/Tração'}),
@@ -266,9 +219,6 @@ def carregar_dados():
 
     return over, lin_grp, lin_raw, blo_grp, mai_grp, lista
 
-# ============================================================
-# CARREGA DADOS E HELPER EXPLAIN
-# ============================================================
 with st.spinner("Carregando dados..."):
     df_over, df_lin, df_lin_raw, df_blo, df_mai, df_lista = carregar_dados()
 
@@ -281,9 +231,12 @@ def explain(titulo, descricao):
     """, unsafe_allow_html=True)
 
 # ============================================================
-# SIDEBAR
+# SIDEBAR COM LISTAS SUSPENSAS
 # ============================================================
-st.sidebar.markdown("## 📊 AIQON | MKT Center")
+LOGO_B64 = "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTGF5ZXJfMiIgZGF0YS1uYW1lPSJMYXllciAyIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzODcuNDQgMTY2LjA1Ij4KICA8ZGVmcz4KICAgIDxzdHlsZT4KICAgICAgLmNscy0xIHsKICAgICAgICBmaWxsOiAjMDA5NGE0OwogICAgICB9CgogICAgICAuY2xzLTIgewogICAgICAgIGZpbGw6IGdyYXk7CiAgICAgIH0KICAgIDwvc3R5bGU+CiAgPC9kZWZzPgogIDxnIGlkPSJMYXllcl8yLTIiIGRhdGEtbmFtZT0iTGF5ZXIgMiI+CiAgICA8Zz4KICAgICAgPGc+CiAgICAgICAgPHBhdGggY2xhc3M9ImNscy0yIiBkPSJNMzc5Ljg4LDM2LjY1Yy01LjMyLTUuMzItMTEuOTMtNy44MS0xOS40OC03Ljgxcy0xNC4wOCwyLjQ5LTE5LjQsNy45Yy01LjQ5LDUuNDktNy44MSwxMi4zNi03LjgxLDIwdjQxLjExaDEwLjgydi00MC41MWMwLTQuODksMS4zNy05LjM2LDQuNzItMTIuOTYsMy4xOC0zLjM1LDYuOTUtNC45OCwxMS41OS00Ljk4czguNDEsMS41NSwxMS41OSw0Ljk4YzMuNDMsMy42MSw0LjcyLDguMDcsNC43MiwxMi45NnY0MC41MWgxMC44MnYtNDEuMTFjLjE3LTcuNjQtMi4xNS0xNC41OS03LjY0LTIwLjA5LDAsMCwuMDksMCwuMDksMFoiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTIiIGQ9Ik0yOTEuMywyNy4xMmMtMTkuNTcsMC0zNS42MiwxNS45Ny0zNS42MiwzNS42MnMxNS45NywzNS42MiwzNS42MiwzNS42MiwzNS42Mi0xNS45NywzNS42Mi0zNS42Mi0xNS45Ny0zNS42Mi0zNS42Mi0zNS42MlpNMjkxLjMsODYuODZjLTEzLjMsMC0yNC4wMy0xMC44Mi0yNC4wMy0yNC4wM3MxMC44Mi0yNC4wMywyNC4wMy0yNC4wMywyNC4wMywxMC44MiwyNC4wMywyNC4wMy0xMC44MiwyNC4wMy0yNC4wMywyNC4wM1oiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTIiIGQ9Ik0yMTYuOCwyOC44NGMtOS4xLDAtMTYuOTEsMy4zNS0yMy4wOSw5Ljk2LTYuNTIsNi44Ny05LjI3LDE1LjE5LTkuMjcsMjQuNTVzMi44MywxNy43Nyw5LjM2LDI0LjYzYzYuMjcsNi41MiwxNC4wOCw5Ljg3LDIzLjA5LDkuODdzNi42MS0uNDMsOS43LTEuNTV2LTExLjQyYy0uMjYuMTctLjYuMjYtLjg2LjQzLTIuODMsMS4zNy01Ljg0LDEuODktOC45MywxLjg5LTYuMDEsMC0xMC43My0yLjU4LTE0Ljc2LTYuODctNC41NS00LjcyLTYuNTItMTAuNTYtNi41Mi0xNy4wOHMyLjA2LTEyLjM2LDYuNTItMTcuMDhjNC4wMy00LjI5LDguODQtNi44NywxNC43Ni02Ljg3czExLjMzLDIuMjMsMTUuNDUsNi45NWM0LjI5LDQuODksNi4xOCwxMC41Niw2LjE4LDE3djYyLjE0aDEwLjgydi02Mi4yM2MwLTkuMzYtMi44My0xNy43Ny05LjM2LTI0LjYzLTYuMDktNi41Mi0xMy45MS05Ljg3LTIzLTkuODdoMGwtLjA5LjE3aDBaIi8+CiAgICAgICAgPHBhdGggY2xhc3M9ImNscy0yIiBkPSJNMTY1LjMsMjguODRoMTAuODJ2NjkuMDFoLTEwLjgyVjI4Ljg0WiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMiIgZD0iTTEyNC43LDI4Ljg0Yy05LjEsMC0xNi45MSwzLjM1LTIzLjA5LDkuOTYtNi40NCw2Ljg3LTkuMjcsMTUuMTktOS4yNywyNC41NXMyLjgzLDE3Ljc3LDkuMzYsMjQuNjNjNi4yNyw2LjUyLDE0LjA4LDkuODcsMjMuMDksOS44N3M2LjUyLS40Myw5LjYxLTEuNTV2LTExLjMzYy0uMjYuMTctLjUyLjI2LS43Ny40My0yLjgzLDEuMzctNS44NCwxLjg5LTguOTMsMS44OS02LjAxLDAtMTAuNzMtMi41OC0xNC43Ni02Ljg3LTQuNTUtNC43Mi02LjUyLTEwLjU2LTYuNTItMTcuMDhzMS45Ny0xMi4yNyw2LjUyLTE3LjA4YzQuMDMtNC4yOSw4Ljg0LTYuODcsMTQuNzYtNi44N3MxMS4zMywyLjMsMTUuNDUsNi45NWM0LjIxLDQuODksNi4xOCwxMC41Niw2LjE4LDE3djEwLjgyaDB2MTQuODVoMHY4Ljc2aDEwLjgydi0zNC41MWMwLTkuMzYtMi44My0xNy43Ny05LjM2LTI0LjYzLTYuMTgtNi41Mi0xMy45OS05Ljg3LTIzLTkuODdoMGwtLjA5LjA5aDBaIi8+CiAgICAgICAgPHBhdGggY2xhc3M9ImNscy0yIiBkPSJNOS41MSwzNS4wMmMtNS4wNiwxNy40MiwyNi40NCwzMC4zOSwzOC44LDUxLjA3LDEyLjEsMjAuMzQtMS43MiwzMS4wNy0xMS44NSwzOS40OCw0LjAzLTEzLjMtMTIuMjctMjEuOC0yNi4zNS0zNy41MS0xMy45OS0xNS4yOC0xMi43OS0zNi4yMi0uNTItNTMuMDUsMCwwLS4wOSwwLS4wOSwwWiIvPgogICAgICA8L2c+CiAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTQ0Ljg3LDBjLTYuMTgsMjEuMzcsMzYuOTEsMzAuMjEsMzYuNjUsNjEuOCwwLDkuODctNC44MSwxOC43MS0xMS42NywyOS4xLDUuODQtMTEuODUtMTQuMTYtMjYuNTItMjguNDEtNDIuMDYtMTMuOTEtMTUuMjgtMjEuOC0zMi42MiwzLjQzLTQ4Ljg0WiIvPgogICAgPC9nPgo8L3N2Zz4="
+
+st.sidebar.image(LOGO_B64, width=180)
+st.sidebar.markdown("### Marketing Intelligence")
 st.sidebar.markdown("---")
 
 menu = st.sidebar.radio("Navegação", [
@@ -307,6 +260,7 @@ else:
 
 datas = st.sidebar.date_input("Período", [min_d, max_d], min_value=min_d, max_value=max_d, format="DD/MM/YYYY")
 
+# Listas Suspensas Nativas (Multiselect sem hacks, garante visualização compacta)
 prod_disp = sorted(df_over['Tag Produto'].unique().tolist())
 filtro_prod = st.sidebar.multiselect("Produto / Marca", prod_disp, default=prod_disp)
 
@@ -326,6 +280,9 @@ if len(datas) == 2:
     lista_f = df_lista[in_date(df_lista) & df_lista['Tag Produto'].isin(filtro_prod)]
 else:
     over_f = lin_f = lin_raw_f = blo_f = mai_f = lista_f = pd.DataFrame(columns=df_over.columns)
+
+st.sidebar.markdown("---")
+st.sidebar.caption("Dados atualizados automaticamente via Colab → GitHub → Streamlit")
 
 # ============================================================
 # 🌐 1. OVERVIEW GERAL
@@ -348,7 +305,7 @@ if menu == "🌐 Overview Geral":
     col1, col2 = st.columns([3, 2])
     with col1:
         st.markdown("#### Evolução de Tração por Plataforma")
-        explain("Como ler este gráfico", "Cada barra representa o volume total de interações num dia. A linha tracejada é a média do período — dias acima dela foram acima do esperado.")
+        explain("Como ler este gráfico", "Cada barra representa o volume total de interações num dia. A linha tracejada é a média do período.")
         evo = over_f.groupby('Data')['Tração'].sum().reset_index()
         fig = go.Figure()
         fig.add_trace(go.Bar(x=evo['Data'], y=evo['Tração'], marker_color='#0094A4', name='Tração Diária', hovertemplate='<b>%{x}</b><br>Tração: %{y:,.0f}<extra></extra>'))
@@ -356,7 +313,7 @@ if menu == "🌐 Overview Geral":
             media = evo['Tração'].mean()
             fig.add_hline(y=media, line_dash='dash', line_color='#F97316', annotation_text=f'Média: {f_br(media)}', annotation_font_color='#F97316')
         criar_fig(fig)
-        st.plotly_chart(fig, width="stretch")
+        st.plotly_chart(fig, use_container_width=True, theme="streamlit")
 
     with col2:
         st.markdown("#### Tração por Produto")
@@ -366,45 +323,40 @@ if menu == "🌐 Overview Geral":
         if not rank.empty:
             fig2 = px.bar(rank, y='Tag Produto', x='Tração', orientation='h', color='Tag Produto', color_discrete_map=CORES_PRODUTOS)
             fig2.update_layout(**PLOTLY_LAYOUT, showlegend=False)
-            st.plotly_chart(fig2, width="stretch")
+            st.plotly_chart(fig2, use_container_width=True, theme="streamlit")
 
     st.markdown("#### Distribuição por Canal")
-    explain("Proporção de canais", "Entenda quanto cada canal contribui para a tração total. Um canal dominante pode indicar dependência — considere equilibrar os investimentos.")
+    explain("Proporção de canais", "Entenda quanto cada canal contribui para a tração total.")
     lin_total = lin_f['Engajamento'].sum() if not lin_f.empty else 0
     blo_total = blo_f['Views'].sum() if not blo_f.empty else 0
     mai_total = mai_f['Aberturas_Abs'].sum() if not mai_f.empty else 0
-    canais = pd.DataFrame({'Canal': ['LinkedIn', 'Blog', 'E-mail'], 'Volume': [lin_total, blo_total, mai_total], 'Cor': ['#0A66C2', '#10B981', '#F97316']})
+    canais = pd.DataFrame({'Canal': ['LinkedIn', 'Blog', 'E-mail'], 'Volume': [lin_total, blo_total, mai_total]})
     
     if canais['Volume'].sum() > 0:
-        fig_pie = go.Figure(go.Pie(labels=canais['Canal'], values=canais['Volume'], hole=0.6, marker=dict(colors=['#0A66C2', '#10B981', '#F97316']), textinfo='label+percent', textfont=dict(color='#C9D1D9', size=13)))
+        fig_pie = go.Figure(go.Pie(labels=canais['Canal'], values=canais['Volume'], hole=0.6, marker=dict(colors=['#0A66C2', '#10B981', '#F97316']), textinfo='label+percent'))
         fig_pie.update_layout(**PLOTLY_LAYOUT, height=280)
         fig_pie.update_traces(hovertemplate='<b>%{label}</b><br>Volume: %{value:,.0f}<extra></extra>')
-        st.plotly_chart(fig_pie, width="stretch")
+        st.plotly_chart(fig_pie, use_container_width=True, theme="streamlit")
 
     st.markdown("#### Lista Mestra de Conteúdo")
-    st.dataframe(lista_f[['Data', 'Plataforma', 'Título', 'Tag Produto', 'Tags Tipo', 'Cliques/Tração', 'Link']], column_config={"Data": st.column_config.DateColumn(format="DD/MM/YYYY"), "Link": st.column_config.LinkColumn("🔗 Abrir"), "Cliques/Tração": st.column_config.NumberColumn(format="%d")}, width="stretch", hide_index=True)
+    st.dataframe(lista_f[['Data', 'Plataforma', 'Título', 'Tag Produto', 'Tags Tipo', 'Cliques/Tração', 'Link']], column_config={"Data": st.column_config.DateColumn(format="DD/MM/YYYY"), "Link": st.column_config.LinkColumn("🔗 Abrir"), "Cliques/Tração": st.column_config.NumberColumn(format="%d")}, use_container_width=True, hide_index=True)
 
 # ============================================================
 # 💼 2. LINKEDIN
 # ============================================================
 elif menu == "💼 LinkedIn — Engajamento":
     st.title("LinkedIn — Análise de Engajamento")
-    explain("O que analisamos aqui?", "Engajamento = Curtidas + Comentários + Shares. O <strong>ER (Engagement Rate)</strong> divide o engajamento pelo número de seguidores — permite comparar posts mesmo quando o número de seguidores muda ao longo do tempo. Conteúdos com ER acima de 0,5% são considerados fortes para B2B.")
+    explain("O que analisamos aqui?", "Engajamento = Curtidas + Comentários + Shares. O <strong>ER (Engagement Rate)</strong> divide o engajamento pelo número de seguidores.")
 
     c1, c2, c3, c4 = st.columns(4)
-    media_eng = lin_f['Engajamento'].mean() if not lin_f.empty else 0
-    er_global = (lin_f['Engajamento'].sum() / lin_f['Seguidores'].sum() if not lin_f.empty and lin_f['Seguidores'].sum() > 0 else 0)
-    n_posts = len(lin_f)
-    top_post = lin_f['Engajamento'].max() if not lin_f.empty else 0
-
-    c1.metric("Média Engajamento/Post", f_br(media_eng))
-    c2.metric("ER Global", f_br(er_global, True), help="Engajamento Total ÷ Seguidores Máx")
-    c3.metric("Posts Analisados", str(n_posts))
-    c4.metric("Maior Engajamento", f_br(top_post))
+    c1.metric("Média Engajamento/Post", f_br(lin_f['Engajamento'].mean() if not lin_f.empty else 0))
+    c2.metric("ER Global", f_br((lin_f['Engajamento'].sum() / lin_f['Seguidores'].sum() if not lin_f.empty and lin_f['Seguidores'].sum() > 0 else 0), True))
+    c3.metric("Posts Analisados", str(len(lin_f)))
+    c4.metric("Maior Engajamento", f_br(lin_f['Engajamento'].max() if not lin_f.empty else 0))
 
     st.markdown("---")
     st.markdown("#### Curva de Engajamento ao Longo do Tempo")
-    explain("Por que isso importa?", "Posts de <strong>notícia</strong> tendem a ter spike rápido e queda. Posts de <strong>conceito</strong> crescem mais devagar mas de forma constante. Identificar esses padrões permite ajustar cadência e tipo de conteúdo. Cada linha representa um post — passe o mouse para ver o título.")
+    explain("Por que isso importa?", "Posts de <strong>notícia</strong> tendem a ter spike rápido e queda. Posts de <strong>conceito</strong> crescem mais devagar mas de forma constante.")
 
     posts_multi = lin_raw_f.groupby('Link da Postagem').filter(lambda x: len(x) > 1)
     if not posts_multi.empty:
@@ -412,44 +364,38 @@ elif menu == "💼 LinkedIn — Engajamento":
         curva_df = posts_multi[posts_multi['Link da Postagem'].isin(top_posts)]
         fig_curva = px.line(curva_df.sort_values('Data'), x='Data', y='Engajamento', color='Título', markers=True, line_shape='spline', title='Top 10 Posts — Engajamento por Medição')
         fig_curva.update_layout(**PLOTLY_LAYOUT)
-        fig_curva.update_traces(hovertemplate='<b>%{fullData.name}</b><br>Data: %{x}<br>Engajamento: %{y}<extra></extra>')
-        st.plotly_chart(fig_curva, width="stretch")
+        st.plotly_chart(fig_curva, use_container_width=True, theme="streamlit")
     else:
-        st.markdown("""
-        <div class="info-card">
-        <p>⏳ <strong>Dados de medição única detectados.</strong> Para ver as curvas de engajamento (24h → 48h → 72h → 7 dias),
-        registre o mesmo post na planilha em múltiplas datas após a publicação. Com os dados atuais, veja abaixo a evolução temporal agregada por semana.</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("""<div class="info-card"><p>⏳ <strong>Dados de medição única detectados.</strong> Registre o post múltiplas vezes para ver as curvas. Abaixo está a visão semanal agregada.</p></div>""", unsafe_allow_html=True)
         lin_temporal = lin_f.copy()
         lin_temporal['Semana'] = pd.to_datetime(lin_temporal['Data']).dt.to_period('W').astype(str)
         semanal = lin_temporal.groupby('Semana')['Engajamento'].mean().reset_index()
         fig_sem = px.line(semanal, x='Semana', y='Engajamento', markers=True, title='Engajamento Médio por Semana')
         fig_sem.update_layout(**PLOTLY_LAYOUT)
-        st.plotly_chart(fig_sem, width="stretch")
+        st.plotly_chart(fig_sem, use_container_width=True, theme="streamlit")
 
     st.markdown("#### Padrões de Comportamento dos Posts")
-    explain("Como classificamos os padrões", "<strong>Spike Inicial 🚀</strong>: pico no 1º registro, queda depois. <strong>Crescimento Constante 📈</strong>: engajamento aumenta progressivamente. <strong>Queda Rápida 📉</strong>: já começa baixo. <strong>Variado 〰️</strong>: comportamento misto.")
+    explain("Como classificamos os padrões", "<strong>Spike Inicial 🚀</strong>: pico no 1º registro, queda depois. <strong>Crescimento Constante 📈</strong>: engajamento aumenta progressivamente.")
     if 'Padrão' in lin_f.columns and not lin_f.empty:
         pad_count = lin_f['Padrão'].value_counts().reset_index()
         pad_count.columns = ['Padrão', 'Posts']
         fig_pad = px.bar(pad_count, x='Padrão', y='Posts', color='Padrão', color_discrete_sequence=['#10B981', '#0094A4', '#DC2626', '#F59E0B'])
         fig_pad.update_layout(**PLOTLY_LAYOUT, showlegend=False)
-        st.plotly_chart(fig_pad, width="stretch")
+        st.plotly_chart(fig_pad, use_container_width=True, theme="streamlit")
 
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("#### Engajamento por Tipo × Tamanho")
-        explain("Como ler", "Cruza <strong>Tipo</strong> (Editorial vs Comercial) com <strong>Tamanho</strong> do post. Células mais escuras = maior engajamento médio.")
+        explain("Como ler", "Cruza <strong>Tipo</strong> com <strong>Tamanho</strong>. Células mais escuras = maior engajamento médio.")
         ab = lin_f.groupby(['Tipo', 'Tamanho'])['Engajamento'].mean().reset_index()
         if not ab.empty:
             fig_hm = px.density_heatmap(ab, x='Tipo', y='Tamanho', z='Engajamento', text_auto='.1f', color_continuous_scale='Teal')
             fig_hm.update_layout(**PLOTLY_LAYOUT)
-            st.plotly_chart(fig_hm, width="stretch")
+            st.plotly_chart(fig_hm, use_container_width=True, theme="streamlit")
 
     with col2:
         st.markdown("#### Top Tags de Conteúdo")
-        explain("Como ler", "Distribuição dos posts por tipo de conteúdo. Um bom mix B2B tem ~40% Produto, ~30% Conceito/Educativo e ~30% Comercial/Notícia.")
+        explain("Como ler", "Distribuição dos posts por tipo de conteúdo. Um bom mix B2B tem diversidade entre produto e conceito.")
         from collections import Counter
         todas_tags = []
         for row in lin_f['Tags Tipo'].dropna():
@@ -458,19 +404,19 @@ elif menu == "💼 LinkedIn — Engajamento":
             tag_df = pd.DataFrame(Counter(todas_tags).most_common(), columns=['Tag', 'Posts'])
             fig_tags = px.bar(tag_df, x='Posts', y='Tag', orientation='h', color_discrete_sequence=['#0094A4'])
             fig_tags.update_layout(**PLOTLY_LAYOUT, showlegend=False)
-            st.plotly_chart(fig_tags, width="stretch")
+            st.plotly_chart(fig_tags, use_container_width=True, theme="streamlit")
 
     st.markdown("#### Todos os Posts")
     cols_show = ['Data', 'Título', 'Tag Produto', 'Tags Tipo', 'Tipo', 'Tamanho', 'Engajamento', 'Taxa Engajamento (ER)', 'Link']
     cols_show = [c for c in cols_show if c in lin_f.columns]
-    st.dataframe(lin_f[cols_show].sort_values('Engajamento', ascending=False), column_config={"Data": st.column_config.DateColumn(format="DD/MM/YYYY"), "Taxa Engajamento (ER)": st.column_config.NumberColumn(format="%.4f"), "Link": st.column_config.LinkColumn("🔗 Ver Post"), "Engajamento": st.column_config.NumberColumn(format="%d")}, width="stretch", hide_index=True)
+    st.dataframe(lin_f[cols_show].sort_values('Engajamento', ascending=False), column_config={"Data": st.column_config.DateColumn(format="DD/MM/YYYY"), "Taxa Engajamento (ER)": st.column_config.NumberColumn(format="%.4f"), "Link": st.column_config.LinkColumn("🔗 Ver Post"), "Engajamento": st.column_config.NumberColumn(format="%d")}, use_container_width=True, hide_index=True)
 
 # ============================================================
 # 📧 3. E-MAIL MARKETING
 # ============================================================
 elif menu == "📧 E-mail Marketing":
     st.title("E-mail Marketing — Funil e Conversão")
-    explain("Métricas principais", "<strong>Taxa de Abertura</strong>: % dos destinatários que abriram o e-mail. Benchmarks B2B: >25% bom, >35% excelente. <strong>CTOR (Click-to-Open Rate)</strong>: % dos que abriram e clicaram. Mede a qualidade do conteúdo. Benchmarks B2B: >10% bom, >20% excelente.")
+    explain("Métricas principais", "<strong>Taxa de Abertura</strong>: % dos destinatários que abriram o e-mail. <strong>CTOR (Click-to-Open Rate)</strong>: % dos que abriram e clicaram.")
 
     ctor_g = (mai_f['Cliques_Abs'].sum() / mai_f['Aberturas_Abs'].sum() if not mai_f.empty and mai_f['Aberturas_Abs'].sum() > 0 else 0)
     tx_ab_g = (mai_f['Aberturas_Abs'].sum() / mai_f['Qtd Enviados'].sum() if not mai_f.empty and mai_f['Qtd Enviados'].sum() > 0 else 0)
@@ -484,15 +430,15 @@ elif menu == "📧 E-mail Marketing":
     col1, col2 = st.columns([1, 2])
     with col1:
         st.markdown("#### Funil de E-mail")
-        explain("Funil", "Cada etapa representa a conversão para a próxima ação. Um funil saudável B2B tem boa proporção de aberturas e CTOR.")
+        explain("Funil", "Cada etapa representa a conversão para a próxima ação.")
         if not mai_f.empty:
-            fig_funil = go.Figure(go.Funnel(y=['Enviados', 'Aberturas', 'Cliques'], x=[mai_f['Qtd Enviados'].sum(), mai_f['Aberturas_Abs'].sum(), mai_f['Cliques_Abs'].sum()], textinfo='value+percent initial', marker={'color': ['#1E293B', '#0094A4', '#10B981']}, connector={'fillcolor': '#161B22'}))
+            fig_funil = go.Figure(go.Funnel(y=['Enviados', 'Aberturas', 'Cliques'], x=[mai_f['Qtd Enviados'].sum(), mai_f['Aberturas_Abs'].sum(), mai_f['Cliques_Abs'].sum()], textinfo='value+percent initial', marker={'color': ['#64748B', '#0094A4', '#10B981']}))
             fig_funil.update_layout(**PLOTLY_LAYOUT, height=320)
-            st.plotly_chart(fig_funil, width="stretch")
+            st.plotly_chart(fig_funil, use_container_width=True, theme="streamlit")
 
     with col2:
         st.markdown("#### Quadrante de Desempenho: Abertura × CTOR")
-        explain("Como usar o quadrante", "Eixo X = Taxa de Abertura (qualidade do assunto). Eixo Y = CTOR (qualidade do conteúdo). 🌟 <strong>Estrelas</strong>: alto em ambos. 📣 <strong>Bom Assunto</strong>: muito aberto mas pouco clicado. 💎 <strong>Nicho Quente</strong>: poucos abrem mas quem abre, clica muito. ⚠️ <strong>Revisar</strong>: baixo em ambos.")
+        explain("Como usar o quadrante", "Eixo X = Taxa de Abertura. Eixo Y = CTOR. 🌟 <strong>Estrelas</strong>: alto em ambos. 📣 <strong>Bom Assunto</strong>: muito aberto mas pouco clicado. 💎 <strong>Nicho Quente</strong>: poucos abrem mas quem abre, clica muito. ⚠️ <strong>Revisar</strong>: baixo em ambos.")
         if not mai_f.empty:
             mai_plot = mai_f.copy()
             mai_plot['Diff CTOR'] = np.where(ctor_g == 0, 0, (mai_plot['CTOR'] - ctor_g) / (ctor_g + 1e-9))
@@ -510,39 +456,36 @@ elif menu == "📧 E-mail Marketing":
 
             fig_scat = px.scatter(mai_plot, x='Taxa de Abertura', y='CTOR', size='Qtd Enviados', color='Quadrante', hover_name='Título', color_discrete_map=CORES_Q, custom_data=['Aberturas_Abs', 'Cliques_Abs', 'Qtd Enviados'])
             fig_scat.update_traces(hovertemplate=("<b>%{hovertext}</b><br>Abertura: %{x:.1%}<br>CTOR: %{y:.1%}<br>Enviados: %{customdata[2]:,.0f}<br>Aberturas: %{customdata[0]:,.0f} | Cliques: %{customdata[1]:,.0f}<extra></extra>"))
-            fig_scat.add_vline(x=tx_ab_g, line_dash='dot', line_color='#475569', annotation_text='Média Abertura', annotation_font_color='#475569')
-            fig_scat.add_hline(y=ctor_g, line_dash='dot', line_color='#475569', annotation_text='Média CTOR', annotation_font_color='#475569')
+            fig_scat.add_vline(x=tx_ab_g, line_dash='dot', line_color='gray', annotation_text='Média Abertura')
+            fig_scat.add_hline(y=ctor_g, line_dash='dot', line_color='gray', annotation_text='Média CTOR')
             fig_scat.update_layout(**PLOTLY_LAYOUT, xaxis_tickformat='.1%', yaxis_tickformat='.1%', height=360)
-            st.plotly_chart(fig_scat, width="stretch")
+            st.plotly_chart(fig_scat, use_container_width=True, theme="streamlit")
 
     st.markdown("#### Todas as Campanhas")
     if not mai_f.empty and 'Quadrante' in mai_plot.columns:
         tabela_mai = mai_f.merge(mai_plot[['Título', 'Quadrante']], on='Título', how='left')
-        st.dataframe(tabela_mai[['Data de Envio', 'Título', 'Tag Produto', 'Tags Tipo', 'Qtd Enviados', 'Aberturas_Abs', 'Cliques_Abs', 'Taxa de Abertura', 'CTOR', 'Quadrante']].sort_values('CTOR', ascending=False), column_config={"Data de Envio": st.column_config.DateColumn(format="DD/MM/YYYY"), "Taxa de Abertura": st.column_config.NumberColumn(format="%.2f%%"), "CTOR": st.column_config.NumberColumn(format="%.2f%%"), "Aberturas_Abs": st.column_config.NumberColumn("Aberturas", format="%d"), "Cliques_Abs": st.column_config.NumberColumn("Cliques", format="%d")}, width="stretch", hide_index=True)
+        st.dataframe(tabela_mai[['Data de Envio', 'Título', 'Tag Produto', 'Tags Tipo', 'Qtd Enviados', 'Aberturas_Abs', 'Cliques_Abs', 'Taxa de Abertura', 'CTOR', 'Quadrante']].sort_values('CTOR', ascending=False), column_config={"Data de Envio": st.column_config.DateColumn(format="DD/MM/YYYY"), "Taxa de Abertura": st.column_config.NumberColumn(format="%.2f%%"), "CTOR": st.column_config.NumberColumn(format="%.2f%%"), "Aberturas_Abs": st.column_config.NumberColumn("Aberturas", format="%d"), "Cliques_Abs": st.column_config.NumberColumn("Cliques", format="%d")}, use_container_width=True, hide_index=True)
 
 # ============================================================
 # 📝 4. BLOG & SEO
 # ============================================================
 elif menu == "📝 Blog & SEO":
     st.title("Blog — Retenção, Conversão e SEO")
-    explain("Métricas do Blog", "<strong>Views</strong>: total de visualizações. <strong>Tempo na Página</strong>: tempo médio de leitura (Bom > 180s). <strong>Taxa de Conversão</strong>: % dos leitores que clicaram em algum CTA/link. O gráfico de dispersão abaixo cruza retenção e conversão.")
+    explain("Métricas do Blog", "<strong>Views</strong>: total de visualizações. <strong>Tempo na Página</strong>: tempo médio de leitura. <strong>Taxa de Conversão</strong>: % dos leitores que clicaram em algum CTA/link.")
 
     tempo_g = blo_f['Tempo da Página'].mean() if not blo_f.empty else 0
     tx_conv_g = (blo_f['Clicks'].sum() / blo_f['Views'].sum() if not blo_f.empty and blo_f['Views'].sum() > 0 else 0)
-    total_views = blo_f['Views'].sum() if not blo_f.empty else 0
-    n_artigos = len(blo_f)
 
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Tempo Médio na Página", f"{f_br(tempo_g)}s", help="Quanto tempo em média os leitores ficam no artigo")
     c2.metric("Taxa de Conversão Média", f_br(tx_conv_g, True), help="Cliques em CTAs ÷ Views totais")
-    c3.metric("Visualizações Totais", f_br(total_views))
-    c4.metric("Artigos Monitorados", str(n_artigos))
+    c3.metric("Visualizações Totais", f_br(blo_f['Views'].sum() if not blo_f.empty else 0))
+    c4.metric("Artigos Monitorados", str(len(blo_f)))
 
     st.markdown("#### Quadrante: Retenção × Conversão")
     explain("4 categorias de artigos", "🌟 <strong>Magnetizadores</strong>: longo tempo + alta conversão. 📖 <strong>Leitura Profunda</strong>: muito lidos mas sem conversão. ⚡ <strong>Conversores Rápidos</strong>: convertem mesmo com pouco tempo. 🔧 <strong>Revisar</strong>: baixo em ambos.")
     if not blo_f.empty:
         blo_plot = blo_f.copy()
-        
         def q_blog(row):
             acima_t = row['Tempo da Página'] >= tempo_g
             acima_c = row['Taxa Conversão'] >= tx_conv_g
@@ -556,35 +499,32 @@ elif menu == "📝 Blog & SEO":
 
         fig_blo = px.scatter(blo_plot, x='Tempo da Página', y='Taxa Conversão', size='Views', color='Quadrante', hover_name='Título', color_discrete_map=CORES_QB, custom_data=['Views', 'Tags Tipo'])
         fig_blo.update_traces(hovertemplate=("<b>%{hovertext}</b><br>Tempo: %{x:.0f}s<br>Conversão: %{y:.1%}<br>Views: %{customdata[0]:,.0f}<br>Tag: %{customdata[1]}<extra></extra>"))
-        fig_blo.add_vline(x=tempo_g, line_dash='dot', line_color='#475569', annotation_text='Média Tempo', annotation_font_color='#475569')
-        fig_blo.add_hline(y=tx_conv_g, line_dash='dot', line_color='#475569', annotation_text='Média Conv.', annotation_font_color='#475569')
+        fig_blo.add_vline(x=tempo_g, line_dash='dot', line_color='gray', annotation_text='Média Tempo')
+        fig_blo.add_hline(y=tx_conv_g, line_dash='dot', line_color='gray', annotation_text='Média Conv.')
         fig_blo.update_layout(**PLOTLY_LAYOUT, yaxis_tickformat='.1%', height=420)
-        st.plotly_chart(fig_blo, width="stretch")
+        st.plotly_chart(fig_blo, use_container_width=True, theme="streamlit")
 
     st.markdown("---")
     st.markdown("#### Checklist de SEO e Qualidade de Conteúdo")
-    explain("Por que isso importa?", "Artigos com SEO score verde no plugin e bons links internos tendem a ranquear melhor e ter mais tráfego orgânico. Conteúdos gerados por IA precisam de atenção especial.")
+    explain("Por que isso importa?", "Artigos com SEO score verde e bons links internos tendem a ranquear melhor e ter mais tráfego orgânico.")
 
     seo_items = [
-        ("SEO Score Verde no Plugin", "Todo artigo deve atingir score verde (Yoast/Rank Math) antes de publicar.", True),
-        ("Palavra-chave no Título e H1", "A keyword principal deve aparecer nos primeiros 60 caracteres do título.", True),
-        ("Links Internos (mínimo 3)", "Aponte para outros artigos relevantes do blog — melhora o tempo na página.", False),
-        ("Links Externos Autoritativos", "1-2 fontes externas de qualidade (CVE DB, fabricantes, pesquisas) por artigo.", False),
-        ("Meta Description Personalizada", "Não deixe o plugin gerar automaticamente — escreva manualmente.", True),
-        ("Conteúdo IA Revisado", "IA gera texto com links pobres. Sempre adicionar links internos/externos manualmente.", False),
-        ("CTA Interno Claro", "Cada artigo deve ter pelo menos 1 CTA (ex: link para produto ou formulário de contato).", False),
-        ("Imagem com Alt Text", "Todas as imagens precisam ter texto alternativo descritivo.", True),
+        ("SEO Score Verde no Plugin", "Atingir score verde (Yoast/Rank Math) antes de publicar.", True),
+        ("Palavra-chave no Título e H1", "Keyword principal nos primeiros 60 caracteres.", True),
+        ("Links Internos (mínimo 3)", "Apontar para outros artigos relevantes.", False),
+        ("Links Externos Autoritativos", "1-2 fontes externas de qualidade por artigo.", False),
+        ("Conteúdo IA Revisado", "IA gera texto com links pobres. Adicione links manualmente.", False),
     ]
 
     for item, desc, ok in seo_items:
         icon = "✅" if ok else "🔧"
         cor = "#10B981" if ok else "#F59E0B"
         st.markdown(f"""
-        <div style="background:#161B22; border:1px solid #21262D; border-left:3px solid {cor}; border-radius:8px; padding:10px 16px; margin:6px 0; display:flex; align-items:center; gap:12px;">
-            <span style="font-size:1.1rem;">{icon}</span>
+        <div style="background-color: var(--secondary-background-color); border: 1px solid rgba(128,128,128,0.2); border-left: 3px solid {cor}; border-radius: 8px; padding: 10px 16px; margin: 6px 0; display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 1.1rem;">{icon}</span>
             <div>
-                <strong style="color:#C9D1D9;">{item}</strong>
-                <p style="color:#7D8590; font-size:0.82rem; margin:2px 0 0 0;">{desc}</p>
+                <strong style="color: var(--text-color);">{item}</strong>
+                <p style="color: var(--text-color); font-size: 0.82rem; margin: 2px 0 0 0; opacity: 0.8;">{desc}</p>
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -592,23 +532,23 @@ elif menu == "📝 Blog & SEO":
     st.markdown("#### Top Artigos por Views")
     if not blo_f.empty:
         top_blo = blo_plot.nlargest(10, 'Views')[['Data', 'Título', 'Tag Produto', 'Tags Tipo', 'Views', 'Tempo da Página', 'Taxa Conversão', 'Quadrante', 'Link']]
-        st.dataframe(top_blo, column_config={"Data": st.column_config.DateColumn(format="DD/MM/YYYY"), "Taxa Conversão": st.column_config.NumberColumn(format="%.2f%%"), "Link": st.column_config.LinkColumn("🔗 Ler"), "Views": st.column_config.NumberColumn(format="%d")}, width="stretch", hide_index=True)
+        st.dataframe(top_blo, column_config={"Data": st.column_config.DateColumn(format="DD/MM/YYYY"), "Taxa Conversão": st.column_config.NumberColumn(format="%.2f%%"), "Link": st.column_config.LinkColumn("🔗 Ler"), "Views": st.column_config.NumberColumn(format="%d")}, use_container_width=True, hide_index=True)
 
 # ============================================================
 # 🏷️ 5. PERFORMANCE POR TAG
 # ============================================================
 elif menu == "🏷️ Performance por Tag":
     st.title("Relatório por Tipo de Conteúdo")
-    explain("Como usar este relatório", "Compare a performance entre diferentes <strong>tipos de conteúdo</strong>. Isso permite entender qual abordagem funciona melhor para cada canal.")
+    explain("Como usar este relatório", "Compare a performance entre diferentes <strong>tipos de conteúdo</strong> para entender o que funciona em cada canal.")
 
     st.markdown("#### Sistema de Tags — Como Classificamos o Conteúdo")
     col_tags = st.columns(len(TAGS_TIPO))
     for i, (nome, keywords) in enumerate(TAGS_TIPO.items()):
         with col_tags[i]:
             st.markdown(f"""
-            <div style="background:#161B22; border:1px solid #21262D; border-radius:10px; padding:12px;">
-                <p style="color:#0094A4; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.08em; margin:0 0 6px 0;">{nome}</p>
-                <p style="color:#7D8590; font-size:0.78rem; line-height:1.5; margin:0;">{', '.join(keywords[:5])}...</p>
+            <div style="background-color: var(--secondary-background-color); border: 1px solid rgba(128,128,128,0.2); border-radius: 10px; padding: 12px;">
+                <p style="color: #0094A4; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 6px 0;">{nome}</p>
+                <p style="color: var(--text-color); font-size: 0.78rem; line-height: 1.5; margin: 0; opacity: 0.8;">{', '.join(keywords[:5])}...</p>
             </div>
             """, unsafe_allow_html=True)
 
@@ -630,12 +570,12 @@ elif menu == "🏷️ Performance por Tag":
             explain("Engajamento médio", "Qual tipo de post gera mais engajamento médio por publicação.")
             fig_t1 = px.bar(tag_eng_df, x='Tag', y='Engajamento Médio', color='Engajamento Médio', color_continuous_scale='Teal')
             fig_t1.update_layout(**PLOTLY_LAYOUT, showlegend=False)
-            st.plotly_chart(fig_t1, width="stretch")
+            st.plotly_chart(fig_t1, use_container_width=True, theme="streamlit")
         with col2:
             explain("Volume de posts", "Quanto de cada tipo foi produzido — mostra o mix editorial atual.")
             fig_t2 = px.pie(tag_eng_df, names='Tag', values='Posts', hole=0.5, color_discrete_sequence=px.colors.sequential.Teal)
             fig_t2.update_layout(**PLOTLY_LAYOUT)
-            st.plotly_chart(fig_t2, width="stretch")
+            st.plotly_chart(fig_t2, use_container_width=True, theme="streamlit")
 
     st.markdown("#### Comparativo Cross-Channel por Produto")
     lin_prod = lin_f.groupby('Tag Produto')['Engajamento'].sum().reset_index().rename(columns={'Engajamento': 'Volume'})
@@ -649,7 +589,7 @@ elif menu == "🏷️ Performance por Tag":
     if not cross.empty:
         fig_cross = px.bar(cross, x='Tag Produto', y='Volume', color='Canal', barmode='group', color_discrete_map={'LinkedIn': '#0A66C2', 'Blog': '#10B981', 'E-mail': '#F97316'})
         fig_cross.update_layout(**PLOTLY_LAYOUT)
-        st.plotly_chart(fig_cross, width="stretch")
+        st.plotly_chart(fig_cross, use_container_width=True, theme="streamlit")
 
 # ============================================================
 # 🤖 6. IA & MODELOS PREDITIVOS
@@ -671,7 +611,7 @@ elif menu == "🤖 IA & Modelos Preditivos":
         CORES_Z = {'🚀 Viral': '#10B981', '📊 Normal': '#0094A4', '🧊 Frio': '#DC2626'}
         fig_z = px.bar(evo, x='Data', y='Tração', color='Status', color_discrete_map=CORES_Z, hover_data=['Z-Score'])
         fig_z.update_layout(**PLOTLY_LAYOUT)
-        st.plotly_chart(fig_z, width="stretch")
+        st.plotly_chart(fig_z, use_container_width=True, theme="streamlit")
 
         dias_virais = evo[evo['Z-Score'] > 1.0]
         dias_frios = evo[evo['Z-Score'] < -1.0]
@@ -680,12 +620,12 @@ elif menu == "🤖 IA & Modelos Preditivos":
             st.success(f"🚀 {len(dias_virais)} Dia(s) Viral(is) detectado(s)")
             if not dias_virais.empty:
                 virais_content = lista_f[lista_f['Data'].isin(dias_virais['Data'])].sort_values('Cliques/Tração', ascending=False)
-                st.dataframe(virais_content[['Data', 'Plataforma', 'Título', 'Cliques/Tração']], hide_index=True, width="stretch")
+                st.dataframe(virais_content[['Data', 'Plataforma', 'Título', 'Cliques/Tração']], hide_index=True, use_container_width=True)
         with col_f:
             st.error(f"🧊 {len(dias_frios)} Dia(s) Frio(s) detectado(s)")
             if not dias_frios.empty:
                 frios_content = lista_f[lista_f['Data'].isin(dias_frios['Data'])].sort_values('Cliques/Tração')
-                st.dataframe(frios_content[['Data', 'Plataforma', 'Título', 'Cliques/Tração']], hide_index=True, width="stretch")
+                st.dataframe(frios_content[['Data', 'Plataforma', 'Título', 'Cliques/Tração']], hide_index=True, use_container_width=True)
     else:
         st.info("Expanda o filtro de datas para ter mais pontos e ativar a análise de anomalias (mínimo 3 dias).")
 
@@ -704,7 +644,7 @@ elif menu == "🤖 IA & Modelos Preditivos":
         CORES_KM = {'🚀 Estrela': '#10B981', '📉 Média': '#F59E0B', '⚠️ Baixa Atenção': '#DC2626'}
         fig_km = px.scatter(mai_km, x='Taxa de Abertura', y='CTOR', color='Classificação IA', size='Qtd Enviados', hover_name='Título', color_discrete_map=CORES_KM)
         fig_km.update_layout(**PLOTLY_LAYOUT, xaxis_tickformat='.1%', yaxis_tickformat='.1%')
-        st.plotly_chart(fig_km, width="stretch")
+        st.plotly_chart(fig_km, use_container_width=True, theme="streamlit")
     else:
         st.info("Mínimo de 4 campanhas de e-mail necessárias para treinar o K-Means.")
 
@@ -713,7 +653,7 @@ elif menu == "🤖 IA & Modelos Preditivos":
     if len(blo_f) > 2:
         fig_ols = px.scatter(blo_f, x='Tempo da Página', y='Taxa Conversão', size='Views', color='Tag Produto', hover_name='Título', color_discrete_map=CORES_PRODUTOS, trendline='ols', trendline_scope='overall', trendline_color_override='#F97316')
         fig_ols.update_layout(**PLOTLY_LAYOUT, yaxis_tickformat='.1%')
-        st.plotly_chart(fig_ols, width="stretch")
+        st.plotly_chart(fig_ols, use_container_width=True, theme="streamlit")
 
         try:
             import statsmodels.api as sm
@@ -742,6 +682,6 @@ elif menu == "🤖 IA & Modelos Preditivos":
     if not ab.empty:
         fig_hm = px.density_heatmap(ab, x='Tipo', y='Tamanho', z='Engajamento', text_auto='.1f', color_continuous_scale='Teal')
         fig_hm.update_layout(**PLOTLY_LAYOUT)
-        st.plotly_chart(fig_hm, width="stretch")
+        st.plotly_chart(fig_hm, use_container_width=True, theme="streamlit")
     else:
         st.info("Sem dados do LinkedIn disponíveis para renderizar a matriz.")
