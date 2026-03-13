@@ -197,7 +197,7 @@ def carregar_dados():
                                 mai_grp['Cliques_Abs'] / mai_grp['Aberturas_Abs'])
     mai_grp['Ignorados'] = mai_grp['Qtd Enviados'] - mai_grp['Aberturas_Abs']
     mai_grp['Plataforma'] = 'Mailchimp'
-    mai_grp['Link'] = mai_grp['URL']
+    mai_grp['Link'] = 'N/A'
 
     # ---------- BLOG ----------
     blo['Tag Produto'] = blo['URL'].apply(tag_produto)
