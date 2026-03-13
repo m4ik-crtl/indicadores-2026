@@ -32,14 +32,14 @@ html, body, [class*="css"] {
     border-radius: 12px;
     padding: 16px 20px;
 }
-[data-testid="metric-container"] label { 
-    font-size: 0.78rem !important; 
-    text-transform: uppercase; 
-    letter-spacing: 0.08em; 
+[data-testid="metric-container"] label {
+    font-size: 0.78rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
 }
-[data-testid="metric-container"] [data-testid="stMetricValue"] { 
-    font-size: 1.7rem !important; 
-    font-weight: 700; 
+[data-testid="metric-container"] [data-testid="stMetricValue"] {
+    font-size: 1.7rem !important;
+    font-weight: 700;
 }
 
 /* Cards informativos e Caixas Explicativas */
@@ -57,17 +57,17 @@ html, body, [class*="css"] {
     margin-bottom: 20px;
     border-left: 1px solid rgba(128, 128, 128, 0.2);
 }
-.explain-box h4 { 
-    color: #0094A4 !important; 
-    font-size: 0.85rem !important; 
-    text-transform: uppercase; 
-    letter-spacing: 0.1em; 
-    margin-bottom: 6px; 
+.explain-box h4 {
+    color: #0094A4 !important;
+    font-size: 0.85rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
 }
-.explain-box p, .info-card p { 
-    font-size: 0.9rem !important; 
-    line-height: 1.6; 
-    margin: 0; 
+.explain-box p, .info-card p {
+    font-size: 0.9rem !important;
+    line-height: 1.6;
+    margin: 0;
 }
 
 /* Tabelas e Gráficos */
