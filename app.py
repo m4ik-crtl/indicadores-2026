@@ -188,7 +188,7 @@ def carregar_dados():
     mai['Aberturas_Abs'] = (mai['Qtd Enviados'] * mai['Taxa de Abertura']).fillna(0).round().astype(int)
     mai['Cliques_Abs'] = (mai['Qtd Enviados'] * mai['Clicks']).fillna(0).round().astype(int)
 
-    mai_grp = mai.groupby(['Título', 'Tag Produto', 'Tags Tipo']).agg({
+    mai_grp = mai.groupby(['Título', 'Tag Produto', 'Tags Tipo', 'URl']).agg({
         'Qtd Enviados': 'sum', 'Aberturas_Abs': 'sum', 'Cliques_Abs': 'sum', 'Data de Envio': 'max'
     }).reset_index()
     mai_grp['Taxa de Abertura'] = np.where(mai_grp['Qtd Enviados'] == 0, 0,
@@ -197,7 +197,7 @@ def carregar_dados():
                                 mai_grp['Cliques_Abs'] / mai_grp['Aberturas_Abs'])
     mai_grp['Ignorados'] = mai_grp['Qtd Enviados'] - mai_grp['Aberturas_Abs']
     mai_grp['Plataforma'] = 'Mailchimp'
-    mai_grp['Link'] = 'N/A'
+    mai_grp['Link'] = mai_grp['URL']
 
     # ---------- BLOG ----------
     blo['Tag Produto'] = blo['URL'].apply(tag_produto)
