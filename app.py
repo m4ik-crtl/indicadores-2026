@@ -214,7 +214,6 @@ def carregar_dados():
     blo_grp['Link'] = blo_grp['URL']
 
     # ---------- LINKEDIN ----------
-    # Mantém dados brutos para curva de engajamento (sem agrupar por data)
     lin['Tag Produto'] = lin['Texto'].apply(tag_produto)
     lin['Tags Tipo'] = lin['Texto'].apply(lambda x: tags_para_str(detectar_tags(x)))
     lin['Tamanho'] = np.where(lin['Texto'].str.len() < 500, 'Curto',
@@ -225,7 +224,6 @@ def carregar_dados():
     )
     lin['Engajamento'] = (lin['Curtidas'].fillna(0) + lin['Comentários'].fillna(0) + lin['Shares'].fillna(0))
 
-    # Curva: dados RAW por post (múltiplas medições)
     lin_raw = lin.copy()
     lin_raw['Engajamento Acum'] = lin_raw.groupby('Link da Postagem')['Engajamento'].cumsum()
     lin_raw['Medicao_Nr'] = lin_raw.groupby('Link da Postagem').cumcount() + 1
@@ -241,7 +239,6 @@ def carregar_dados():
     lin_grp['Plataforma'] = 'LinkedIn'
     lin_grp['Link'] = lin_grp['Link da Postagem']
 
-    # Detecta padrão de engajamento (spike, constante, queda)
     def detectar_padrao(grupo):
         if len(grupo) < 2:
             return 'Dado Único'
@@ -289,9 +286,20 @@ with st.spinner("Carregando dados..."):
     df_over, df_lin, df_lin_raw, df_blo, df_mai, df_lista = carregar_dados()
 
 # ============================================================
+# 📅 DATA DA ÚLTIMA ATUALIZAÇÃO
+# ============================================================
+_datas_atualizacao = pd.Series(
+    df_lin['Data'].dropna().tolist() +
+    df_blo['Data'].dropna().tolist() +
+    df_mai['Data de Envio'].dropna().tolist()
+)
+ULTIMA_ATUALIZACAO = _datas_atualizacao.max() if not _datas_atualizacao.empty else datetime.date.today()
+ULTIMA_ATUALIZACAO_STR = pd.Timestamp(ULTIMA_ATUALIZACAO).strftime("%d/%m/%Y")
+
+# ============================================================
 # SIDEBAR
 # ============================================================
-st.sidebar.image("data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTGF5ZXJfMiIgZGF0YS1uYW1lPSJMYXllciAyIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzODcuNDQgMTY2LjA1Ij4KICA8ZGVmcz4KICAgIDxzdHlsZT4KICAgICAgLmNscy0xIHsKICAgICAgICBmaWxsOiAjMDA5NGE0OwogICAgICB9CgogICAgICAuY2xzLTIgewogICAgICAgIGZpbGw6IGdyYXk7CiAgICAgIH0KICAgIDwvc3R5bGU+CiAgPC9kZWZzPgogIDxnIGlkPSJMYXllcl8yLTIiIGRhdGEtbmFtZT0iTGF5ZXIgMiI+CiAgICA8Zz4KICAgICAgPGc+CiAgICAgICAgPHBhdGggY2xhc3M9ImNscy0yIiBkPSJNMzc5Ljg4LDM2LjY1Yy01LjMyLTUuMzItMTEuOTMtNy44MS0xOS40OC03Ljgxcy0xNC4wOCwyLjQ5LTE5LjQsNy45Yy01LjQ5LDUuNDktNy44MSwxMi4zNi03LjgxLDIwdjQxLjExaDEwLjgydi00MC41MWMwLTQuODksMS4zNy05LjM2LDQuNzItMTIuOTYsMy4xOC0zLjM1LDYuOTUtNC45OCwxMS41OS00Ljk4czguNDEsMS41NSwxMS41OSw0Ljk4YzMuNDMsMy42MSw0LjcyLDguMDcsNC43MiwxMi45NnY0MC41MWgxMC44MnYtNDEuMTFjLjE3LTcuNjQtMi4xNS0xNC41OS03LjY0LTIwLjA5LDAsMCwuMDksMCwuMDksMFoiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTIiIGQ9Ik0yOTEuMywyNy4xMmMtMTkuNTcsMC0zNS42MiwxNS45Ny0zNS42MiwzNS42MnMxNS45NywzNS42MiwzNS42MiwzNS42MiwzNS42Mi0xNS45NywzNS42Mi0zNS42Mi0xNS45Ny0zNS42Mi0zNS42Mi0zNS42MlpNMjkxLjMsODYuODZjLTEzLjMsMC0yNC4wMy0xMC44Mi0yNC4wMy0yNC4wM3MxMC44Mi0yNC4wMywyNC4wMy0yNC4wMywyNC4wMywxMC44MiwyNC4wMywyNC4wMy0xMC44MiwyNC4wMy0yNC4wMywyNC4wM1oiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTIiIGQ9Ik0yMTYuOCwyOC44NGMtOS4xLDAtMTYuOTEsMy4zNS0yMy4wOSw5Ljk2LTYuNTIsNi44Ny05LjI3LDE1LjE5LTkuMjcsMjQuNTVzMi44MywxNy43Nyw5LjM2LDI0LjYzYzYuMjcsNi41MiwxNC4wOCw5Ljg3LDIzLjA5LDkuODdzNi42MS0uNDMsOS43LTEuNTV2LTExLjQyYy0uMjYuMTctLjYuMjYtLjg2LjQzLTIuODMsMS4zNy01Ljg0LDEuODktOC45MywxLjg5LTYuMDEsMC0xMC43My0yLjU4LTE0Ljc2LTYuODctNC41NS00LjcyLTYuNTItMTAuNTYtNi41Mi0xNy4wOHMyLjA2LTEyLjM2LDYuNTItMTcuMDhjNC4wMy00LjI5LDguODQtNi44NywxNC43Ni02Ljg3czExLjMzLDIuMjMsMTUuNDUsNi45NWM0LjI5LDQuODksNi4xOCwxMC41Niw2LjE4LDE3djYyLjE0aDEwLjgydi02Mi4yM2MwLTkuMzYtMi44My0xNy43Ny05LjM2LTI0LjYzLTYuMDktNi41Mi0xMy45MS05Ljg3LTIzLTkuODdoMGwtLjA5LjE3aDBaIi8+CiAgICAgICAgPHBhdGggY2xhc3M9ImNscy0yIiBkPSJNMTY1LjMsMjguODRoMTAuODJ2NjkuMDFoLTEwLjgyVjI4Ljg0WiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMiIgZD0iTTEyNC43LDI4Ljg0Yy05LjEsMC0xNi45MSwzLjM1LTIzLjA5LDkuOTYtNi40NCw2Ljg3LTkuMjcsMTUuMTktOS4yNywyNC41NXMyLjgzLDE3Ljc3LDkuMzYsMjQuNjNjNi4yNyw2LjUyLDE0LjA4LDkuODcsMjMuMDksOS44N3M2LjUyLS40Myw5LjYxLTEuNTV2LTExLjMzYy0uMjYuMTctLjUyLjI2LS43Ny40My0yLjgzLDEuMzctNS44NCwxLjg5LTguOTMsMS44OS02LjAxLDAtMTAuNzMtMi41OC0xNC43Ni02Ljg3LTQuNTUtNC43Mi02LjUyLTEwLjU2LTYuNTItMTcuMDhzMS45Ny0xMi4yNyw2LjUyLTE3LjA4YzQuMDMtNC4yOSw4Ljg0LTYuODcsMTQuNzYtNi44N3MxMS4zMywyLjIzLDE1LjQ1LDYuOTVjNC4yMSw0Ljg5LDYuMTgsMTAuNTYsNi4xOCwxN3YxMC44MmgwdjE0Ljg1aDB2OC43NmgxMC44MnYtMzQuNTFjMC05LjM2LTIuODMtMTcuNzctOS4zNi0yNC42My02LjE4LTYuNTItMTMuOTktOS44Ny0yMy05Ljg3aDBsLS4wOS4wOWgwWiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMiIgZD0iTTkuNTEsMzUuMDJjLTUuMDYsMTcuNDIsMjYuNDQsMzAuMzksMzguOCw1MS4wNywxMi4xLDIwLjM0LTEuNzIsMzEuMDctMTEuODUsMzkuNDgsNC4wMy0xMy4zLTEyLjI3LTIxLjgtMjYuMzUtMzcuNTEtMTMuOTktMTUuMjgtMTIuNzktMzYuMjItLjUyLTUzLjA1LDAsMC0uMDksMC0uMDksMFoiLz4KICAgICAgPC9nPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik00NC44NywwYy02LjE4LDIxLjM3LDM2LjkxLDMwLjIxLDM2LjY1LDYxLjgsMCw5Ljg3LTQuODEsMTguNzEtMTEuNjcsMjkuMSw1Ljg0LTExLjg1LTE0LjE2LTI2LjUyLTI4LjQxLTQyLjA2LTEzLjkxLTE1LjI4LTIxLjgtMzIuNjIsMy40My00OC44NFoiLz4KICAgIDwvZz4KICAgIDxnPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMTEuNTIsMTYwLjE0aC0yLjg3di0xNS4wOWgtNS4xNnYtMi40NmgxMy4xOXYyLjQ2aC01LjE2djE1LjA5WiIvPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMzAuNzUsMTYwLjE0aC0yLjgzdi04LjE2YzAtMS4wMi0uMjEtMS43OS0uNjItMi4yOXMtMS4wNy0uNzYtMS45Ni0uNzZjLTEuMTgsMC0yLjA1LjM1LTIuNjEsMS4wNi0uNTYuNzEtLjgzLDEuODktLjgzLDMuNTZ2Ni41OWgtMi44MnYtMTguNjhoMi44MnY0Ljc0YzAsLjc2LS4wNSwxLjU3LS4xNCwyLjQ0aC4xOGMuMzgtLjY0LjkyLTEuMTQsMS42LTEuNDkuNjgtLjM1LDEuNDgtLjUzLDIuMzktLjUzLDMuMjIsMCw0LjgyLDEuNjIsNC44Miw0Ljg2djguNjVaIi8+CiAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTE0MC40NywxNjAuMzhjLTIuMDYsMC0zLjY4LS42LTQuODQtMS44MXMtMS43NS0yLjg2LTEuNzUtNC45Ny41NC0zLjg3LDEuNjItNS4xMSwyLjU2LTEuODYsNC40NS0xLjg2YzEuNzUsMCwzLjE0LjUzLDQuMTUsMS42LDEuMDIsMS4wNiwxLjUyLDIuNTMsMS41Miw0LjM5djEuNTJoLTguODVjLjA0LDEuMjkuMzksMi4yOCwxLjA0LDIuOTcuNjYuNjksMS41OCwxLjA0LDIuNzcsMS4wNC43OCwwLDEuNTEtLjA3LDIuMTktLjIyLjY4LS4xNSwxLjQtLjM5LDIuMTgtLjc0djIuMjljLS42OS4zMy0xLjM4LjU2LTIuMDkuN3MtMS41MS4yLTIuNDEuMlpNMTM5Ljk1LDE0OC43N2MtLjksMC0xLjYxLjI4LTIuMTYuODUtLjU0LjU3LS44NiwxLjQtLjk3LDIuNDhoNi4wM2MtLjAyLTEuMS0uMjgtMS45My0uNzktMi40OS0uNTEtLjU2LTEuMjItLjg1LTIuMTEtLjg1WiIvPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xNTUuNTIsMTQyLjZoNS4yMWMyLjQyLDAsNC4xNi4zNSw1LjI0LDEuMDZzMS42MSwxLjgyLDEuNjEsMy4zNGMwLDEuMDItLjI2LDEuODgtLjc5LDIuNTYtLjUzLjY4LTEuMjksMS4xMS0yLjI4LDEuMjh2LjEyYzEuMjMuMjMsMi4xNC42OSwyLjcyLDEuMzcuNTguNjguODcsMS42MS44NywyLjc4LDAsMS41OC0uNTUsMi44MS0xLjY1LDMuNy0xLjEuODktMi42MywxLjM0LTQuNTksMS4zNGgtNi4zNHYtMTcuNTVaTTE1OC4zOSwxNDkuODVoMi43NmMxLjIsMCwyLjA4LS4xOSwyLjYzLS41N3MuODMtMS4wMy44My0xLjk0YzAtLjgyLS4zLTEuNDItLjg5LTEuNzktLjYtLjM3LTEuNTQtLjU1LTIuODQtLjU1aC0yLjQ5djQuODVaTTE1OC4zOSwxNTIuMTd2NS41NmgzLjA1YzEuMiwwLDIuMTEtLjIzLDIuNzItLjY5cy45Mi0xLjE5LjkyLTIuMThjMC0uOTEtLjMxLTEuNTktLjk0LTIuMDMtLjYyLS40NC0xLjU3LS42Ni0yLjg0LS42NmgtMi45MVoiLz4KICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMTc4LjE4LDE0Ni42M2MuNTcsMCwxLjA0LjA0LDEuNC4xMmwtLjI4LDIuNjNjLS40LS4xLS44Mi0uMTQtMS4yNS0uMTQtMS4xMywwLTIuMDQuMzctMi43NCwxLjFzLTEuMDUsMS42OS0xLjA1LDIuODd2Ni45NGgtMi44MnYtMTMuMjdoMi4yMWwuMzcsMi4zNGguMTRjLjQ0LS43OSwxLjAxLTEuNDIsMS43Mi0xLjg4LjcxLS40NiwxLjQ3LS43LDIuMjktLjdaIi8+CiAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTE5MC4zNSwxNjAuMTRsLS41Ni0xLjg1aC0uMWMtLjY0LjgxLTEuMjgsMS4zNi0xLjkzLDEuNjVzLTEuNDguNDQtMi41LjQ0Yy0xLjMsMC0yLjMyLS4zNS0zLjA1LTEuMDYtLjczLS43LTEuMS0xLjctMS4xLTIuOTksMC0xLjM3LjUxLTIuNCwxLjUyLTMuMSwxLjAyLS43LDIuNTYtMS4wOCw0LjY0LTEuMTRsMi4yOS0uMDd2LS43MWMwLS44NS0uMi0xLjQ4LS41OS0xLjktLjQtLjQyLTEuMDEtLjYzLTEuODQtLjYzLS42OCwwLTEuMzMuMS0xLjk2LjMtLjYyLjItMS4yMi40NC0xLjguNzFsLS45MS0yLjAyYy43Mi0uMzgsMS41MS0uNjYsMi4zNi0uODZzMS42Ni0uMjksMi40Mi0uMjljMS42OSwwLDIuOTYuMzcsMy44MiwxLjFzMS4yOSwxLjg5LDEuMjksMy40N3Y4Ljk0aC0yLjAyWk0xODYuMTUsMTU4LjIyYzEuMDIsMCwxLjg1LS4yOSwyLjQ3LS44NnMuOTMtMS4zOC45My0yLjQxdi0xLjE1bC0xLjcuMDdjLTEuMzMuMDUtMi4yOS4yNy0yLjkuNjctLjYuNC0uOTEsMS0uOTEsMS44MiwwLC41OS4xOCwxLjA1LjUzLDEuMzcuMzUuMzIuODguNDksMS41OC40OVoiLz4KICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMjA1LjE3LDE2MC4xNGgtMTAuMDd2LTEuNzRsNi43MS05LjM3aC02LjN2LTIuMTZoOS40N3YxLjk3bC02LjU3LDkuMTVoNi43NnYyLjE2WiIvPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0yMDcuODksMTQzLjM1YzAtLjUuMTQtLjg5LjQxLTEuMTcuMjgtLjI3LjY3LS40MSwxLjE4LS40MXMuODguMTQsMS4xNi40MWMuMjguMjcuNDEuNjYuNDEsMS4xN3MtLjE0Ljg2LS40MSwxLjEzYy0uMjguMjgtLjY2LjQxLTEuMTYuNDFzLS45MS0uMTQtMS4xOC0uNDFjLS4yOC0uMjgtLjQxLS42NS0uNDEtMS4xM1pNMjEwLjg3LDE2MC4xNGgtMi44MnYtMTMuMjdoMi44MnYxMy4yN1oiLz4KICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMjE3LjczLDE2MC4xNGgtMi44MnYtMTguNjhoMi44MnYxOC42OFoiLz4KICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMjIxLjU5LDE0My4zNWMwLS41LjE0LS44OS40MS0xLjE3LjI4LS4yNy42Ny0uNDEsMS4xOC0uNDFzLjg4LjE0LDEuMTYuNDFjLjI4LjI3LjQxLjY2LjQxLDEuMTdzLS4xNC44Ni0uNDEsMS4xM2MtLjI4LjI4LS42Ni40MS0xLjE2LjQxcy0uOTEtLjE0LTEuMTgtLjQxYy0uMjgtLjI4LS40MS0uNjUtLjQxLTEuMTNaTTIyNC41OCwxNjAuMTRoLTIuODJ2LTEzLjI3aDIuODJ2MTMuMjdaIi8+CiAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTIzNi45MiwxNjAuMTRsLS41Ni0xLjg1aC0uMWMtLjY0LjgxLTEuMjgsMS4zNi0xLjkzLDEuNjVzLTEuNDguNDQtMi41LjQ0Yy0xLjMsMC0yLjMyLS4zNS0zLjA1LTEuMDYtLjczLS43LTEuMS0xLjctMS4xLTIuOTksMC0xLjM3LjUxLTIuNCwxLjUyLTMuMSwxLjAyLS43LDIuNTYtMS4wOCw0LjY0LTEuMTRsMi4yOS0uMDd2LS43MWMwLS44NS0uMi0xLjQ4LS41OS0xLjktLjQtLjQyLTEuMDEtLjYzLTEuODQtLjYzLS42OCwwLTEuMzMuMS0xLjk2LjMtLjYyLjItMS4yMi40NC0xLjguNzFsLS45MS0yLjAyYy43Mi0uMzgsMS41MS0uNjYsMi4zNi0uODZzMS42Ni0uMjksMi40Mi0uMjljMS42OSwwLDIuOTYuMzcsMy44MiwxLjFzMS4yOSwxLjg5LDEuMjksMy40N3Y4Ljk0aC0yLjAyWk0yMzIuNzIsMTU4LjIyYzEuMDIsMCwxLjg1LS4yOSwyLjQ3LS44NnMuOTMtMS4zOC45My0yLjQxdi0xLjE1bC0xLjcuMDdjLTEuMzMuMDUtMi4yOS4yNy0yLjkuNjctLjYuNC0uOTEsMS0uOTEsMS44MiwwLC41OS4xOCwxLjA1LjUzLDEuMzcuMzUuMzIuODguNDksMS41OC40OVoiLz4KICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMjU0LjU1LDE2MC4xNGgtMi44M3YtOC4xNmMwLTEuMDItLjIxLTEuNzktLjYyLTIuMjlzLTEuMDctLjc2LTEuOTYtLjc2Yy0xLjE5LDAtMi4wNi4zNS0yLjYyLDEuMDZzLS44MywxLjg4LS44MywzLjU0djYuNjFoLTIuODJ2LTEzLjI3aDIuMjFsLjQsMS43NGguMTRjLjQtLjYzLjk3LTEuMTIsMS43MS0xLjQ2Ljc0LS4zNCwxLjU1LS41MiwyLjQ1LS41MiwzLjE4LDAsNC43OCwxLjYyLDQuNzgsNC44NnY4LjY1WiIvPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0yNzIuNjMsMTQ0LjgxYy0xLjY1LDAtMi45NS41OC0zLjg5LDEuNzUtLjk0LDEuMTctMS40MiwyLjc4LTEuNDIsNC44NHMuNDUsMy43OCwxLjM2LDQuODhjLjkxLDEuMSwyLjIyLDEuNjYsMy45NCwxLjY2Ljc0LDAsMS40Ni0uMDcsMi4xNi0uMjIuNy0uMTUsMS40Mi0uMzQsMi4xNy0uNTd2Mi40NmMtMS4zOC41Mi0yLjk0Ljc4LTQuNjguNzgtMi41NywwLTQuNTQtLjc4LTUuOTItMi4zMy0xLjM4LTEuNTYtMi4wNi0zLjc4LTIuMDYtNi42OCwwLTEuODIuMzMtMy40MiwxLTQuNzlzMS42My0yLjQyLDIuOS0zLjE0YzEuMjYtLjczLDIuNzUtMS4wOSw0LjQ1LTEuMDksMS43OSwwLDMuNDUuMzgsNC45NywxLjEzbC0xLjAzLDIuMzljLS41OS0uMjgtMS4yMi0uNTMtMS44OC0uNzQtLjY2LS4yMS0xLjM1LS4zMi0yLjA4LS4zMloiLz4KICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMjc4LjQyLDE0Ni44N2gzLjA3bDIuNyw3LjUzYy40MSwxLjA3LjY4LDIuMDguODIsMy4wMmguMWMuMDctLjQ0LjItLjk3LjQtMS42LjE5LS42MywxLjIxLTMuNjEsMy4wNS04Ljk1aDMuMDVsLTUuNjgsMTUuMDRjLTEuMDMsMi43Ni0yLjc1LDQuMTQtNS4xNiw0LjE0LS42MiwwLTEuMjMtLjA3LTEuODMtLjJ2LTIuMjNjLjQyLjEuOTEuMTQsMS40NS4xNCwxLjM2LDAsMi4zMi0uNzksMi44Ny0yLjM2bC40OS0xLjI1LTUuMzMtMTMuMjdaIi8+CiAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTMwMC40LDE0Ni42M2MxLjY2LDAsMi45NS42LDMuODcsMS44LjkyLDEuMiwxLjM5LDIuODgsMS4zOSw1LjA1cy0uNDcsMy44Ny0xLjQsNS4wOGMtLjk0LDEuMjEtMi4yNCwxLjgyLTMuOSwxLjgycy0yLjk5LS42LTMuOTEtMS44MWgtLjE5bC0uNTIsMS41N2gtMi4xMXYtMTguNjhoMi44MnY0LjQ0YzAsLjMzLS4wMi44Mi0uMDUsMS40NnMtLjA2LDEuMDYtLjA3LDEuMjRoLjEyYy45LTEuMzIsMi4yMi0xLjk4LDMuOTYtMS45OFpNMjk5LjY3LDE0OC45M2MtMS4xNCwwLTEuOTUuMzMtMi40NSwxcy0uNzYsMS43OS0uNzcsMy4zNXYuMTljMCwxLjYyLjI2LDIuNzkuNzcsMy41MS41MS43MiwxLjM1LDEuMDksMi41MSwxLjA5LDEsMCwxLjc2LS40LDIuMjctMS4xOS41Mi0uNzkuNzctMS45NC43Ny0zLjQzLDAtMy4wMi0xLjAzLTQuNTItMy4xLTQuNTJaIi8+CiAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTMxNC43MywxNjAuMzhjLTIuMDYsMC0zLjY4LS42LTQuODQtMS44MXMtMS43NS0yLjg2LTEuNzUtNC45Ny41NC0zLjg3LDEuNjItNS4xMSwyLjU2LTEuODYsNC40NS0xLjg2YzEuNzUsMCwzLjE0LjUzLDQuMTUsMS42LDEuMDIsMS4wNiwxLjUyLDIuNTMsMS41Miw0LjM5djEuNTJoLTguODVjLjA0LDEuMjkuMzksMi4yOCwxLjA0LDIuOTcuNjYuNjksMS41OCwxLjA0LDIuNzcsMS4wNC43OCwwLDEuNTEtLjA3LDIuMTktLjIyLjY4LS4xNSwxLjQtLjM5LDIuMTgtLjc0djIuMjljLS42OS4zMy0xLjM4LjU2LTIuMDkuN3MtMS41MS4yLTIuNDEuMlpNMzE0LjIyLDE0OC43N2MtLjksMC0xLjYxLjI4LTIuMTYuODUtLjU0LjU3LS44NiwxLjQtLjk3LDIuNDhoNi4wM2MtLjAyLTEuMS0uMjgtMS45My0uNzktMi40OS0uNTEtLjU2LTEuMjItLjg1LTIuMTEtLjg1WiIvPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0zMjkuODMsMTQ2LjYzYy41NywwLDEuMDQuMDQsMS40LjEybC0uMjgsMi42M2MtLjQtLjEtLjgyLS4xNC0xLjI1LS4xNC0xLjEzLDAtMi4wNC4zNy0yLjc0LDEuMXMtMS4wNSwxLjY5LTEuMDUsMi44N3Y2Ljk0aC0yLjgydi0xMy4yN2gyLjIxbC4zNywyLjM0aC4xNGMuNDQtLjc5LDEuMDEtMS40MiwxLjcyLTEuODguNzEtLjQ2LDEuNDctLjcsMi4yOS0uN1oiLz4KICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMzU0LjIyLDE2MC4xNGgtMi44OHYtNy45MWgtOC4wOXY3LjkxaC0yLjg3di0xNy41NWgyLjg3djcuMThoOC4wOXYtNy4xOGgyLjg4djE3LjU1WiIvPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0zNjcuOSwxNjAuMTRsLS40LTEuNzRoLS4xNGMtLjM5LjYyLS45NSwxLjEtMS42NywxLjQ1LS43Mi4zNS0xLjU1LjUzLTIuNDguNTMtMS42MSwwLTIuODEtLjQtMy42LTEuMi0uNzktLjgtMS4xOS0yLjAxLTEuMTktMy42NHYtOC42OGgyLjg0djguMTljMCwxLjAyLjIxLDEuNzguNjIsMi4yOS40Mi41MSwxLjA3Ljc2LDEuOTYuNzYsMS4xOCwwLDIuMDUtLjM1LDIuNjEtMS4wNi41Ni0uNzEuODMtMS44OS44My0zLjU2di02LjYxaDIuODN2MTMuMjdoLTIuMjJaIi8+CiAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTM4MC45MiwxNDYuNjNjMS42NiwwLDIuOTUuNiwzLjg3LDEuOC45MiwxLjIsMS4zOSwyLjg4LDEuMzksNS4wNXMtLjQ3LDMuODctMS40LDUuMDhjLS45NCwxLjIxLTIuMjQsMS44Mi0zLjksMS44MnMtMi45OS0uNi0zLjkxLTEuODFoLS4xOWwtLjUyLDEuNTdoLTIuMTF2LTE4LjY4aDIuODJ2NC40NGMwLC4zMy0uMDIuODItLjA1LDEuNDZzLS4wNiwxLjA2LS4wNywxLjI0aC4xMmMuOS0xLjMyLDIuMjItMS45OCwzLjk2LTEuOThaTTM4MC4xOSwxNDguOTNjLTEuMTQsMC0xLjk1LjMzLTIuNDUsMXMtLjc2LDEuNzktLjc3LDMuMzV2LjE5YzAsMS42Mi4yNiwyLjc5Ljc3LDMuNTEuNTEuNzIsMS4zNSwxLjA5LDIuNTEsMS4wOSwxLDAsMS43Ni0uNCwyLjI3LTEuMTkuNTItLjc5Ljc3LTEuOTQuNzctMy40MywwLTMuMDItMS4wMy00LjUyLTMuMS00LjUyWiIvPgogICAgPC9nPgogIDwvZz4KPC9zdmc+", width=180)
+st.sidebar.image("data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTGF5ZXJfMiIgZGF0YS1uYW1lPSJMYXllciAyIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzODcuNDQgMTY2LjA1Ij4KICA8ZGVmcz4KICAgIDxzdHlsZT4KICAgICAgLmNscy0xIHsKICAgICAgICBmaWxsOiAjMDA5NGE0OwogICAgICB9CgogICAgICAuY2xzLTIgewogICAgICAgIGZpbGw6IGdyYXk7CiAgICAgIH0KICAgIDwvc3R5bGU+CiAgPC9kZWZzPgogIDxnIGlkPSJMYXllcl8yLTIiIGRhdGEtbmFtZT0iTGF5ZXIgMiI+CiAgICA8Zz4KICAgICAgPGc+CiAgICAgICAgPHBhdGggY2xhc3M9ImNscy0yIiBkPSJNMzc5Ljg4LDM2LjY1Yy01LjMyLTUuMzItMTEuOTMtNy44MS0xOS40OC03Ljgxcy0xNC4wOCwyLjQ5LTE5LjQsNy45Yy01LjQ5LDUuNDktNy44MSwxMi4zNi03LjgxLDIwdjQxLjExaDEwLjgydi00MC41MWMwLTQuODksMS4zNy05LjM2LDQuNzItMTIuOTYsMy4xOC0zLjM1LDYuOTUtNC45OCwxMS41OS00Ljk4czguNDEsMS41NSwxMS41OSw0Ljk4YzMuNDMsMy42MSw0LjcyLDguMDcsNC43MiwxMi45NnY0MC41MWgxMC44MnYtNDEuMTFjLjE3LTcuNjQtMi4xNS0xNC41OS03LjY0LTIwLjA5LDAsMCwuMDksMCwuMDksMFoiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTIiIGQ9Ik0yOTEuMywyNy4xMmMtMTkuNTcsMC0zNS42MiwxNS45Ny0zNS42MiwzNS42MnMxNS45NywzNS42MiwzNS42MiwzNS42MiwzNS42Mi0xNS45NywzNS42Mi0zNS42Mi0xNS45Ny0zNS42Mi0zNS42Mi0zNS42MlpNMjkxLjMsODYuODZjLTEzLjMsMC0yNC4wMy0xMC44Mi0yNC4wMy0yNC4wM3MxMC44Mi0yNC4wMywyNC4wMy0yNC4wMywyNC4wMywxMC44MiwyNC4wMywyNC4wMy0xMC44MiwyNC4wMy0yNC4wMywyNC4wM1oiLz4KICAgICAgICA8cGF0aCBjbGFzcz0iY2xzLTIiIGQ9Ik0yMTYuOCwyOC44NGMtOS4xLDAtMTYuOTEsMy4zNS0yMy4wOSw5Ljk2LTYuNTIsNi44Ny05LjI3LDE1LjE5LTkuMjcsMjQuNTVzMi44MywxNy43Nyw5LjM2LDI0LjYzYzYuMjcsNi41MiwxNC4wOCw5Ljg3LDIzLjA5LDkuODdzNi42MS0uNDMsOS43LTEuNTV2LTExLjQyYy0uMjYuMTctLjYuMjYtLjg2LjQzLTIuODMsMS4zNy01Ljg0LDEuODktOC45MywxLjg5LTYuMDEsMC0xMC43My0yLjU4LTE0Ljc2LTYuODctNC41NS00LjcyLTYuNTItMTAuNTYtNi41Mi0xNy4wOHMyLjA2LTEyLjM2LDYuNTItMTcuMDhjNC4wMy00LjI5LDguODQtNi44NywxNC43Ni02Ljg3czExLjMzLDIuMjMsMTUuNDUsNi45NWM0LjI5LDQuODksNi4xOCwxMC41Niw2LjE4LDE3djYyLjE0aDEwLjgydi02Mi4yM2MwLTkuMzYtMi44My0xNy43Ny05LjM2LTI0LjYzLTYuMDktNi41Mi0xMy45MS05Ljg3LTIzLTkuODdoMGwtLjA5LjE3aDBaIi8+CiAgICAgICAgPHBhdGggY2xhc3M9ImNscy0yIiBkPSJNMTY1LjMsMjguODRoMTAuODJ2NjkuMDFoLTEwLjgyVjI4Ljg0WiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMiIgZD0iTTEyNC43LDI4Ljg0Yy05LjEsMC0xNi45MSwzLjM1LTIzLjA5LDkuOTYtNi40NCw2Ljg3LTkuMjcsMTUuMTktOS4yNywyNC41NXMyLjgzLDE3Ljc3LDkuMzYsMjQuNjNjNi4yNyw2LjUyLDE0LjA4LDkuODcsMjMuMDksOS44N3M2LjUyLS40Myw5LjYxLTEuNTV2LTExLjMzYy0uMjYuMTctLjUyLjI2LS43Ny40My0yLjgzLDEuMzctNS44NCwxLjg5LTguOTMsMS44OS02LjAxLDAtMTAuNzMtMi41OC0xNC43Ni02Ljg3LTQuNTUtNC43Mi02LjUyLTEwLjU2LTYuNTItMTcuMDhzMS45Ny0xMi4yNyw2LjUyLTE3LjA4YzQuMDMtNC4yOSw4Ljg0LTYuODcsMTQuNzYtNi44N3MxMS4zMywyLjIzLDE1LjQ1LDYuOTVjNC4yMSw0Ljg5LDYuMTgsMTAuNTYsNi4xOCwxN3YxMC44MmgwdjE0Ljg1aDB2OC43NmgxMC44MnYtMzQuNTFjMC05LjM2LTIuODMtMTcuNzctOS4zNi0yNC42My02LjE4LTYuNTItMTMuOTktOS44Ny0yMy05Ljg3aDBsLS4wOS4wOWgwWiIvPgogICAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMiIgZD0iTTkuNTEsMzUuMDJjLTUuMDYsMTcuNDIsMjYuNDQsMzAuMzksMzguOCw1MS4wNywxMi4xLDIwLjM0LTEuNzIsMzEuMDctMTEuODUsMzkuNDgsNC4wMy0xMy4zLTEyLjI3LTIxLjgtMjYuMzUtMzcuNTEtMTMuOTktMTUuMjgtMTIuNzktMzYuMjItLjUyLTUzLjA1LDAsMC0uMDksMCwuMDksMFoiLz4KICAgICAgPC9nPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik00NC44NywwYy02LjE4LDIxLjM3LDM2LjkxLDMwLjIxLDM2LjY1LDYxLjgsMCw5Ljg3LTQuODEsMTguNzEtMTEuNjcsMjkuMSw1Ljg0LTExLjg1LTE0LjE2LTI2LjUyLTI4LjQxLTQyLjA2LTEzLjkxLTE1LjI4LTIxLjgtMzIuNjIsMy40My00OC44NFoiLz4KICAgIDwvZz4KICAgIDxnPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMTEuNTIsMTYwLjE0aC0yLjg3di0xNS4wOWgtNS4xNnYtMi40NmgxMy4xOXYyLjQ2aC01LjE2djE1LjA5WiIvPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMzAuNzUsMTYwLjE0aC0yLjgzdi04LjE2YzAtMS4wMi0uMjEtMS43OS0uNjItMi4yOXMtMS4wNy0uNzYtMS45Ni0uNzZjLTEuMTgsMC0yLjA1LjM1LTIuNjEsMS4wNi0uNTYuNzEtLjgzLDEuODktLjgzLDMuNTZ2Ni41OWgtMi44MnYtMTguNjhoMi44MnY0Ljc0YzAsLjc2LS4wNSwxLjU3LS4xNCwyLjQ0aC4xOGMuMzgtLjY0LjkyLTEuMTQsMS42LTEuNDkuNjgtLjM1LDEuNDgtLjUzLDIuMzktLjUzLDMuMjIsMCw0LjgyLDEuNjIsNC44Miw0Ljg2djguNjVaIi8+CiAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTE0MC40NywxNjAuMzhjLTIuMDYsMC0zLjY4LS42LTQuODQtMS44MXMtMS43NS0yLjg2LTEuNzUtNC45Ny41NC0zLjg3LDEuNjItNS4xMSwyLjU2LTEuODYsNC40NS0xLjg2YzEuNzUsMCwzLjE0LjUzLDQuMTUsMS42LDEuMDIsMS4wNiwxLjUyLDIuNTMsMS41Miw0LjM5djEuNTJoLTguODVjLjA0LDEuMjkuMzksMi4yOCwxLjA0LDIuOTcuNjYuNjksMS41OCwxLjA0LDIuNzcsMS4wNC43OCwwLDEuNTEtLjA3LDIuMTktLjIyLjY4LS4xNSwxLjQtLjM5LDIuMTgtLjc0djIuMjljLS42OS4zMy0xLjM4LjU2LTIuMDkuN3MtMS41MS4yLTIuNDEuMlpNMTM5Ljk1LDE0OC43N2MtLjksMC0xLjYxLjI4LTIuMTYuODUtLjU0LjU3LS44NiwxLjQtLjk3LDIuNDhoNi4wM2MtLjAyLTEuMS0uMjgtMS45My0uNzktMi40OS0uNTEtLjU2LTEuMjItLjg1LTIuMTEtLjg1WiIvPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xNTUuNTIsMTQyLjZoNS4yMWMyLjQyLDAsNC4xNi4zNSw1LjI0LDEuMDZzMS42MSwxLjgyLDEuNjEsMy4zNGMwLDEuMDItLjI2LDEuODgtLjc5LDIuNTYtLjUzLjY4LTEuMjksMS4xMS0yLjI4LDEuMjh2LjEyYzEuMjMuMjMsMi4xNC42OSwyLjcyLDEuMzdjLjU4LjY4Ljg3LDEuNjEuODcsMi43OCwwLDEuNTgtLjU1LDIuODEtMS42NSwzLjctMS4xLjg5LTIuNjMsMS4zNC00LjU5LDEuMzRoLTYuMzR2LTE3LjU1Wk0xNTguMzksMTQ5Ljg1aDIuNzZjMS4yLDAsMi4wOC0uMTksMi42My0uNTdzLjgzLTEuMDMuODMtMS45NGMwLS44Mi0uMy0xLjQyLS44OS0xLjc5LS42LS4zNy0xLjU0LS41NS0yLjg0LS41NWgtMi40OXY0Ljg1Wk0xNTguMzksMTUyLjE3djUuNTZoMy4wNWMxLjIsMCwyLjExLS4yMywyLjcyLS42OXMuOTItMS4xOS45Mi0yLjE4YzAtLjkxLS4zMS0xLjU5LS45NC0yLjAzLS42Mi0uNDQtMS41Ny0uNjYtMi44NC0uNjZoLTIuOTFaIi8+CiAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTE3OC4xOCwxNDYuNjNjLjU3LDAsMS4wNC4wNCwxLjQuMTJsLS4yOCwyLjYzYy0uNC0uMS0uODItLjE0LTEuMjUtLjE0LTEuMTMsMC0yLjA0LjM3LTIuNzQsMS4xcy0xLjA1LDEuNjktMS4wNSwyLjg3djYuOTRoLTIuODJ2LTEzLjI3aDIuMjFsLjM3LDIuMzRoLjE0Yy40NC0uNzksMS4wMS0xLjQyLDEuNzItMS44OC43MS0uNDYsMS40Ny0uNywyLjI5LS43WiIvPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xOTAuMzUsMTYwLjE0bC0uNTYtMS44NWgtLjFjLS42NC44MS0xLjI4LDEuMzYtMS45MywxLjY1cy0xLjQ4LjQ0LTIuNS40NGMtMS4zLDAtMi4zMi0uMzUtMy4wNS0xLjA2LS43My0uNy0xLjEtMS43LTEuMS0yLjk5LDAtMS4zNy41MS0yLjQsMS41Mi0zLjEsMS4wMi0uNywyLjU2LTEuMDgsNC42NC0xLjE0bDIuMjktLjA3di0uNzFjMC0uODUtLjItMS40OC0uNTktMS45LS40LS40Mi0xLjAxLS42My0xLjg0LS42My0uNjgsMC0xLjMzLjEtMS45Ni4zLS42Mi4yLTEuMjIuNDQtMS44LjcxbC0uOTEtMi4wMmMuNzItLjM4LDEuNTEtLjY2LDIuMzYtLjg2czEuNjYtLjI5LDIuNDItLjI5YzEuNjksMCwyLjk2LjM3LDMuODIsMS4xczEuMjksMS44OSwxLjI5LDMuNDd2OC45NGgtMi4wMlpNMTg2LjE1LDE1OC4yMmMxLjAyLDAsMS44NS0uMjksMi40Ny0uODZzLjkzLTEuMzguOTMtMi40MXYtMS4xNWwtMS43LjA3Yy0xLjMzLjA1LTIuMjkuMjctMi45LjY3LS42LjQtLjkxLDEtLjkxLDEuODIsMCwuNTkuMTgsMS4wNS41MywxLjM3LjM1LjMyLjg4LjQ5LDEuNTguNDlaIi8+CiAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTIwNS4xNywxNjAuMTRoLTEwLjA3di0xLjc0bDYuNzEtOS4zN2gtNi4zdi0yLjE2aDkuNDd2MS45N2wtNi41Nyw5LjE1aDYuNzZ2Mi4xNloiLz4KICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMjA3Ljg5LDE0My4zNWMwLS41LjE0LS44OS40MS0xLjE3LjI4LS4yNy42Ny0uNDEsMS4xOC0uNDFzLjg4LjE0LDEuMTYuNDFjLjI4LjI3LjQxLjY2LjQxLDEuMTdzLS4xNC44Ni0uNDEsMS4xM2MtLjI4LjI4LS42Ni40MS0xLjE2LjQxcy0uOTEtLjE0LTEuMTgtLjQxYy0uMjgtLjI4LS40MS0uNjUtLjQxLTEuMTNaTTIxMC44NywxNjAuMTRoLTIuODJ2LTEzLjI3aDIuODJ2MTMuMjdaIi8+CiAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTIxNy43MywxNjAuMTRoLTIuODJ2LTE4LjY4aDIuODJ2MTguNjhaIi8+CiAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTIyMS41OSwxNDMuMzVjMC0uNS4xNC0uODkuNDEtMS4xNy4yOC0uMjcuNjctLjQxLDEuMTgtLjQxcy44OC4xNCwxLjE2LjQxYy4yOC4yNy40MS42Ni40MSwxLjE3cy0uMTQuODYtLjQxLDEuMTNjLS4yOC4yOC0uNjYuNDEtMS4xNi40MXMtLjkxLS4xNC0xLjE4LS40MWMtLjI4LS4yOC0uNDEtLjY1LS40MS0xLjEzWk0yMjQuNTgsMTYwLjE0aC0yLjgydi0xMy4yN2gyLjgydjEzLjI3WiIvPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0yMzYuOTIsMTYwLjE0bC0uNTYtMS44NWgtLjFjLS42NC44MS0xLjI4LDEuMzYtMS45MywxLjY1cy0xLjQ4LjQ0LTIuNS40NGMtMS4zLDAtMi4zMi0uMzUtMy4wNS0xLjA2LS43My0uNy0xLjEtMS43LTEuMS0yLjk5LDAtMS4zNy41MS0yLjQsMS41Mi0zLjEsMS4wMi0uNywyLjU2LTEuMDgsNC42NC0xLjE0bDIuMjktLjA3di0uNzFjMC0uODUtLjItMS40OC0uNTktMS45LS40LS40Mi0xLjAxLS42My0xLjg0LS42My0uNjgsMC0xLjMzLjEtMS45Ni4zLS42Mi4yLTEuMjIuNDQtMS44LjcxbC0uOTEtMi4wMmMuNzItLjM4LDEuNTEtLjY2LDIuMzYtLjg2czEuNjYtLjI5LDIuNDItLjI5YzEuNjksMCwyLjk2LjM3LDMuODIsMS4xczEuMjksMS44OSwxLjI5LDMuNDd2OC45NGgtMi4wMlpNMjMyLjcyLDE1OC4yMmMxLjAyLDAsMS44NS0uMjksMi40Ny0uODZzLjkzLTEuMzguOTMtMi40MXYtMS4xNWwtMS43LjA3Yy0xLjMzLjA1LTIuMjkuMjctMi45LjY3LS42LjQtLjkxLDEtLjkxLDEuODIsMCwuNTkuMTgsMS4wNS41MywxLjM3LjM1LjMyLjg4LjQ5LDEuNTguNDlaIi8+CiAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTI1NC41NSwxNjAuMTRoLTIuODN2LTguMTZjMC0xLjAyLS4yMS0xLjc5LS42Mi0yLjI5cy0xLjA3LS43Ni0xLjk2LS43NmMtMS4xOSwwLTIuMDYuMzUtMi42MiwxLjA2cy0uODMsMS44OC0uODMsMy41NHY2LjYxaC0yLjgydi0xMy4yN2gyLjIxbC40LDEuNzRoLjE0Yy40LS42My45Ny0xLjEyLDEuNzEtMS40Ni43NC0uMzQsMS41NS0uNTIsMi40NS0uNTIsMy4xOCwwLDQuNzgsMS42Miw0Ljc4LDQuODZ2OC42NVoiLz4KICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMjcyLjYzLDE0NC44MWMtMS42NSwwLTIuOTUuNTgtMy44OSwxLjc1LS45NCwxLjE3LTEuNDIsMi43OC0xLjQyLDQuODRzLjQ1LDMuNzgsMS4zNiw0Ljg4YzAuOTEsMS4xLDIuMjIsMS42NiwzLjk0LDEuNjYuNzQsMCwxLjQ2LS4wNywyLjE2LS4yMi43LS4xNSwxLjQyLS4zNCwyLjE3LS41N3YyLjQ2Yy0xLjM4LjUyLTIuOTQuNzgtNC42OC43OC0yLjU3LDAtNC41NC0uNzgtNS45Mi0yLjMzLTEuMzgtMS41Ni0yLjA2LTMuNzgtMi4wNi02LjY4LDAtMS44Mi4zMy0zLjQyLDEtNC43OXMxLjYzLTIuNDIsMi45LTMuMTRjMS4yNi0uNzMsMi43NS0xLjA5LDQuNDUtMS4wOSwxLjc5LDAsMy40NS4zOCw0Ljk3LDEuMTNsLTEuMDMsMi4zOWMtLjU5LS4yOC0xLjIyLS41My0xLjg4LS43NC0uNjYtLjIxLTEuMzUtLjMyLTIuMDgtLjMyWiIvPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0yNzguNDIsMTQ2Ljg3aDMuMDdsMi43LDcuNTNjLjQxLDEuMDcuNjgsMi4wOC44MiwzLjAyaC4xYy4wNy0uNDQuMi0uOTcuNC0xLjYuMTktLjYzLDEuMjEtMy42MSwzLjA1LTguOTVoMy4wNWwtNS42OCwxNS4wNGMtMS4wMywyLjc2LTIuNzUsNC4xNC01LjE2LDQuMTQtLjYyLDAtMS4yMy0uMDctMS44My0uMnYtMi4yM2MuNDIuMS45MS4xNCwxLjQ1LjE0LDEuMzYsMCwyLjMyLS43OSwyLjg3LTIuMzZsLjQ5LTEuMjUtNS4zMy0xMy4yN1oiLz4KICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMzAwLjQsMTQ2LjYzYzEuNjYsMCwyLjk1LjYsMy44NywxLjguOTIsMS4yLDEuMzksMi44OCwxLjM5LDUuMDVzLS40NywzLjg3LTEuNCw1LjA4Yy0uOTQsMS4yMS0yLjI0LDEuODItMy45LDEuODJzLTIuOTktLjYtMy45MS0xLjgxaC0uMTlsLS41MiwxLjU3aC0yLjExdi0xOC42OGgyLjgydjQuNDRjMCwuMzMtLjAyLjgyLS4wNSwxLjQ2cy0uMDYsMS4wNi0uMDcsMS4yNGguMTJjLjktMS4zMiwyLjIyLTEuOTgsMy45Ni0xLjk4Wk0yOTkuNjcsMTQ4LjkzYy0xLjE0LDAtMS45NS4zMy0yLjQ1LDFzLS43NiwxLjc5LS43NywzLjM1di4xOWMwLDEuNjIuMjYsMi43OS43NywzLjUxLjUxLjcyLDEuMzUsMS4wOSwyLjUxLDEuMDksMSwwLDEuNzYtLjQsMi4yNy0xLjE5LjUyLS43OS43Ny0xLjk0Ljc3LTMuNDMsMC0zLjAyLTEuMDMtNC41Mi0zLjEtNC41MloiLz4KICAgICAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMzE0LjczLDE2MC4zOGMtMi4wNiwwLTMuNjgtLjYtNC44NC0xLjgxcy0xLjc1LTIuODYtMS43NS00Ljk3LjU0LTMuODcsMS42Mi01LjExLDIuNTYtMS44Niw0LjQ1LTEuODZjMS43NSwwLDMuMTQuNTMsNC4xNSwxLjYsMS4wMiwxLjA2LDEuNTIsMi41MywxLjUyLDQuMzl2MS41MmgtOC44NWMuMDQsMS4yOS4zOSwyLjI4LDEuMDQsMi45Ny42Ni42OSwxLjU4LDEuMDQsMi43NywxLjA0Ljc4LDAsMS41MS0uMDcsMi4xOS0uMjIuNjgtLjE1LDEuNC0uMzksMi4xOC0uNzR2Mi4yOWMtLjY5LjMzLTEuMzguNTYtMi4wOS43cy0xLjUxLjItMi40MS4yWk0zMTQuMjIsMTQ4Ljc3Yy0uOSwwLTEuNjEuMjgtMi4xNi44NS0uNTQuNTctLjg2LDEuNC0uOTcsMi40OGg2LjAzYy0uMDItMS4xLS4yOC0xLjkzLS43OS0yLjQ5LS41MS0uNTYtMS4yMi0uODUtMi4xMS0uODVaIi8+CiAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTMyOS44MywxNDYuNjNjLjU3LDAsMS4wNC4wNCwxLjQuMTJsLS4yOCwyLjYzYy0uNC0uMS0uODItLjE0LTEuMjUtLjE0LTEuMTMsMC0yLjA0LjM3LTIuNzQsMS4xcy0xLjA1LDEuNjktMS4wNSwyLjg3djYuOTRoLTIuODJ2LTEzLjI3aDIuMjFsLjM3LDIuMzRoLjE0Yy40NC0uNzksMS4wMS0xLjQyLDEuNzItMS44OC43MS0uNDYsMS40Ny0uNywyLjI5LS43WiIvPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0zNTQuMjIsMTYwLjE0aC0yLjg4di03LjkxaC04LjA5djcuOTFoLTIuODd2LTE3LjU1aDIuODd2Ny4xOGg4LjA5di03LjE4aDIuODh2MTcuNTVaIi8+CiAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTM2Ny45LDE2MC4xNGwtLjQtMS43NGgtLjE0Yy0uMzkuNjItLjk1LDEuMS0xLjY3LDEuNDUtLjcyLjM1LTEuNTUuNTMtMi40OC41M2MtMS42MSwwLTIuODEtLjQtMy42LTEuMi0uNzktLjgtMS4xOS0yLjAxLTEuMTktMy42NHYtOC42OGgyLjg0djguMTljMCwxLjAyLjIxLDEuNzguNjIsMi4yOS40Mi41MSwxLjA3Ljc2LDEuOTYuNzYsMS4xOCwwLDIuMDUtLjM1LDIuNjEtMS4wNi41Ni0uNzEuODMtMS44OS44My0zLjU2di02LjYxaDIuODN2MTMuMjdoLTIuMjJaIi8+CiAgICAgIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTM4MC45MiwxNDYuNjNjMS42NiwwLDIuOTUuNiwzLjg3LDEuOC45MiwxLjIsMS4zOSwyLjg4LDEuMzksNS4wNXMtLjQ3LDMuODctMS40LDUuMDhjLS45NCwxLjIxLTIuMjQsMS44Mi0zLjksMS44MnMtMi45OS0uNi0zLjkxLTEuODFoLS4xOWwtLjUyLDEuNTdoLTIuMTF2LTE4LjY4aDIuODJ2NC40NGMwLC4zMy0uMDIuODItLjA1LDEuNDZzLS4wNiwxLjA2LS4wNywxLjI0aC4xMmMuOS0xLjMyLDIuMjItMS45OCwzLjk2LTEuOThaTTM4MC4xOSwxNDguOTNjLTEuMTQsMC0xLjk1LjMzLTIuNDUsMXMtLjc2LDEuNzktLjc3LDMuMzV2LjE5YzAsMS42Mi4yNiwyLjc5Ljc3LDMuNTEuNTEuNzIsMS4zNSwxLjA5LDIuNTEsMS4wOSwxLDAsMS43Ni0uNCwyLjI3LTEuMTkuNTItLjc5Ljc3LTEuOTQuNzctMy40MywwLTMuMDItMS4wMy00LjUyLTMuMS00LjUyWiIvPgogICAgPC9nPgogIDwvZz4KPC9zdmc+", width=180)
 st.sidebar.markdown("### Marketing Intelligence")
 st.sidebar.markdown("---")
 
@@ -316,7 +324,6 @@ else:
 
 datas = st.sidebar.date_input("Período", [min_d, max_d], min_value=min_d, max_value=max_d, format="DD/MM/YYYY")
 
-# Criando Dropdowns compactos usando expansores com checkboxes
 prod_disp = sorted(df_over['Tag Produto'].unique().tolist())
 filtro_prod = []
 with st.sidebar.expander("📌 Selecionar Produtos", expanded=False):
@@ -345,11 +352,42 @@ if len(datas) == 2 and filtro_prod and filtro_tag:
 else:
     over_f = lin_f = lin_raw_f = blo_f = mai_f = lista_f = pd.DataFrame(columns=df_over.columns)
 
+# ============================================================
+# 📅 BADGE DE ATUALIZAÇÃO NA SIDEBAR
+# ============================================================
 st.sidebar.markdown("---")
-st.sidebar.caption("Dados atualizados automaticamente via Colab → GitHub → Streamlit")
+st.sidebar.markdown(f"""
+<div style="
+    background: rgba(0, 148, 164, 0.12);
+    border: 1px solid rgba(0, 148, 164, 0.35);
+    border-radius: 10px;
+    padding: 10px 14px;
+    text-align: center;
+">
+    <p style="
+        color: #0094A4;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin: 0 0 4px 0;
+    ">Última Atualização</p>
+    <p style="
+        color: #C9D1D9;
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin: 0;
+        font-family: 'DM Mono', monospace;
+    ">{ULTIMA_ATUALIZACAO_STR}</p>
+    <p style="
+        color: #7D8590;
+        font-size: 0.72rem;
+        margin: 4px 0 0 0;
+    ">Dados via Colab → GitHub → Streamlit</p>
+</div>
+""", unsafe_allow_html=True)
 
 # ============================================================
-# 📘 HELPER: Caixa explicativa
+# 📘 HELPERS
 # ============================================================
 def explain(titulo, descricao):
     st.markdown(f"""
@@ -359,12 +397,41 @@ def explain(titulo, descricao):
     </div>
     """, unsafe_allow_html=True)
 
+def badge_atualizacao():
+    st.markdown(f"""
+    <div style="
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(0, 148, 164, 0.1);
+        border: 1px solid rgba(0, 148, 164, 0.3);
+        border-radius: 20px;
+        padding: 4px 12px;
+        margin-bottom: 12px;
+    ">
+        <span style="
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: #0094A4;
+            display: inline-block;
+        "></span>
+        <span style="color: #7D8590; font-size: 0.78rem;">Dados atualizados em</span>
+        <span style="
+            color: #0094A4;
+            font-size: 0.78rem;
+            font-weight: 600;
+            font-family: 'DM Mono', monospace;
+        ">{ULTIMA_ATUALIZACAO_STR}</span>
+    </div>
+    """, unsafe_allow_html=True)
+
 
 # ============================================================
 # 🌐 1. OVERVIEW GERAL
 # ============================================================
 if menu == "🌐 Overview Geral":
     st.title("Overview de Marketing")
+    badge_atualizacao()
     explain("O que é este painel?",
             "Visão consolidada de toda a presença digital: LinkedIn, Blog e E-mail. "
             "O indicador <strong>Tração</strong> soma engajamentos do LinkedIn, visualizações do Blog e aberturas de e-mail — "
@@ -454,6 +521,7 @@ if menu == "🌐 Overview Geral":
 # ============================================================
 elif menu == "💼 LinkedIn — Engajamento":
     st.title("LinkedIn — Análise de Engajamento")
+    badge_atualizacao()
     explain("O que analisamos aqui?",
             "Engajamento = Curtidas + Comentários + Shares. "
             "O <strong>ER (Engagement Rate)</strong> divide o engajamento pelo número de seguidores — permite comparar posts "
@@ -472,7 +540,6 @@ elif menu == "💼 LinkedIn — Engajamento":
     c3.metric("Posts Analisados", str(n_posts))
     c4.metric("Maior Engajamento", f_br(top_post))
 
-    # Curva de engajamento
     st.markdown("---")
     st.markdown("#### Curva de Engajamento ao Longo do Tempo")
     explain("Por que isso importa?",
@@ -511,7 +578,6 @@ elif menu == "💼 LinkedIn — Engajamento":
         fig_sem.update_layout(**PLOTLY_LAYOUT)
         st.plotly_chart(fig_sem, width="stretch")
 
-    # Padrões
     st.markdown("#### Padrões de Comportamento dos Posts")
     explain("Como classificamos os padrões",
             "<strong>Spike Inicial 🚀</strong>: pico no 1º registro, queda depois — típico de notícias urgentes. "
@@ -527,7 +593,6 @@ elif menu == "💼 LinkedIn — Engajamento":
         fig_pad.update_layout(**PLOTLY_LAYOUT, showlegend=False)
         st.plotly_chart(fig_pad, width="stretch")
 
-    # Matriz tipo x tamanho
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("#### Engajamento por Tipo × Tamanho")
@@ -557,7 +622,6 @@ elif menu == "💼 LinkedIn — Engajamento":
             fig_tags.update_layout(**PLOTLY_LAYOUT, showlegend=False)
             st.plotly_chart(fig_tags, width="stretch")
 
-    # Tabela
     st.markdown("#### Todos os Posts")
     cols_show = ['Data', 'Título', 'Tag Produto', 'Tags Tipo', 'Tipo', 'Tamanho', 'Engajamento', 'Taxa Engajamento (ER)', 'Link']
     cols_show = [c for c in cols_show if c in lin_f.columns]
@@ -577,6 +641,7 @@ elif menu == "💼 LinkedIn — Engajamento":
 # ============================================================
 elif menu == "📧 E-mail Marketing":
     st.title("E-mail Marketing — Funil e Conversão")
+    badge_atualizacao()
     explain("Métricas principais",
             "<strong>Taxa de Abertura</strong>: % dos destinatários que abriram o e-mail. Benchmarks B2B: >25% bom, >35% excelente. "
             "<strong>CTOR (Click-to-Open Rate)</strong>: % dos que abriram e clicaram. Mede a qualidade do conteúdo do e-mail. "
@@ -627,7 +692,6 @@ elif menu == "📧 E-mail Marketing":
                 (mai_plot['CTOR'] - ctor_g) / (ctor_g + 1e-9)
             )
 
-            # Classificação por quadrante
             def quadrante(row):
                 acima_ab = row['Taxa de Abertura'] >= tx_ab_g
                 acima_ctor = row['CTOR'] >= ctor_g
@@ -669,7 +733,6 @@ elif menu == "📧 E-mail Marketing":
                                    xaxis_tickformat='.1%', yaxis_tickformat='.1%', height=360)
             st.plotly_chart(fig_scat, width="stretch")
 
-    # Evolução temporal de taxa de abertura
     st.markdown("#### Evolução da Taxa de Abertura ao Longo do Tempo")
     explain("Tendência temporal",
             "Monitore se as taxas de abertura estão subindo ou caindo ao longo do tempo. "
@@ -696,7 +759,6 @@ elif menu == "📧 E-mail Marketing":
         fig_evo.update_layout(**PLOTLY_LAYOUT, yaxis_tickformat='.1%', height=300)
         st.plotly_chart(fig_evo, width="stretch")
 
-    # Tabela
     st.markdown("#### Todas as Campanhas")
     if not mai_f.empty and 'Quadrante' in mai_plot.columns:
         tabela_mai = mai_f.merge(mai_plot[['Título', 'Quadrante']], on='Título', how='left')
@@ -718,6 +780,7 @@ elif menu == "📧 E-mail Marketing":
 # ============================================================
 elif menu == "📝 Blog & SEO":
     st.title("Blog — Retenção, Conversão e SEO")
+    badge_atualizacao()
     explain("Métricas do Blog",
             "<strong>Views</strong>: número total de visualizações do artigo. "
             "<strong>Tempo na Página</strong>: tempo médio de leitura — sinal de qualidade do conteúdo. Bom para B2B: >3 min (180s). "
@@ -736,7 +799,6 @@ elif menu == "📝 Blog & SEO":
     c3.metric("Visualizações Totais", f_br(total_views))
     c4.metric("Artigos Monitorados", str(n_artigos))
 
-    # Scatter retenção × conversão
     st.markdown("#### Quadrante: Retenção × Conversão")
     explain("4 categorias de artigos",
             "🌟 <strong>Magnetizadores</strong>: longo tempo + alta conversão — os melhores artigos. "
@@ -784,7 +846,6 @@ elif menu == "📝 Blog & SEO":
         fig_blo.update_layout(**PLOTLY_LAYOUT, yaxis_tickformat='.1%', height=420)
         st.plotly_chart(fig_blo, width="stretch")
 
-    # SEO Checklist
     st.markdown("---")
     st.markdown("#### Checklist de SEO e Qualidade de Conteúdo")
     explain("Por que isso importa?",
@@ -817,7 +878,6 @@ elif menu == "📝 Blog & SEO":
         </div>
         """, unsafe_allow_html=True)
 
-    # Top artigos
     st.markdown("#### Top Artigos por Views")
     if not blo_f.empty:
         top_blo = blo_plot.nlargest(10, 'Views')[
@@ -840,6 +900,7 @@ elif menu == "📝 Blog & SEO":
 # ============================================================
 elif menu == "🏷️ Performance por Tag":
     st.title("Relatório por Tipo de Conteúdo")
+    badge_atualizacao()
     explain("Como usar este relatório",
             "Compare a performance entre diferentes <strong>tipos de conteúdo</strong> (Produto, Notícia, Conceito, Campanha). "
             "Isso permite entender qual abordagem funciona melhor para cada canal e ajustar a estratégia editorial. "
@@ -858,7 +919,6 @@ elif menu == "🏷️ Performance por Tag":
 
     st.markdown("---")
 
-    # LinkedIn por tag
     st.markdown("#### LinkedIn — Engajamento por Tipo de Conteúdo")
     if not lin_f.empty:
         from collections import defaultdict
@@ -888,9 +948,9 @@ elif menu == "🏷️ Performance por Tag":
             fig_t2.update_layout(**PLOTLY_LAYOUT)
             st.plotly_chart(fig_t2, width="stretch")
 
-    # Email por tag
     st.markdown("#### E-mail — Abertura Média por Tipo")
     if not mai_f.empty:
+        from collections import defaultdict
         tag_mai = defaultdict(list)
         for _, row in mai_f.iterrows():
             for t in str(row.get('Tags Tipo', '')).split(','):
@@ -910,9 +970,9 @@ elif menu == "🏷️ Performance por Tag":
         fig_mai_tag.update_layout(**PLOTLY_LAYOUT, yaxis_tickformat='.1%', showlegend=False)
         st.plotly_chart(fig_mai_tag, width="stretch")
 
-    # Blog por tag
     st.markdown("#### Blog — Views Médias por Tipo")
     if not blo_f.empty:
+        from collections import defaultdict
         tag_blo = defaultdict(list)
         for _, row in blo_f.iterrows():
             for t in str(row.get('Tags Tipo', '')).split(','):
@@ -931,7 +991,6 @@ elif menu == "🏷️ Performance por Tag":
         fig_blo_tag.update_layout(**PLOTLY_LAYOUT, showlegend=False)
         st.plotly_chart(fig_blo_tag, width="stretch")
 
-    # Comparativo cross-channel
     st.markdown("#### Comparativo Cross-Channel por Produto")
     explain("Canal mais eficiente por produto",
             "Cruza produto com canal para identificar onde cada marca performa melhor. "
@@ -957,6 +1016,7 @@ elif menu == "🏷️ Performance por Tag":
 # ============================================================
 elif menu == "🤖 IA & Modelos Preditivos":
     st.title("Inteligência Artificial & Modelos Preditivos")
+    badge_atualizacao()
     explain("O que a IA faz aqui?",
             "Três algoritmos analisam seus dados de marketing automaticamente: "
             "(1) <strong>Detecção de Anomalias</strong> identifica dias virais e dias frios usando Z-Score estatístico. "
@@ -967,7 +1027,6 @@ elif menu == "🤖 IA & Modelos Preditivos":
         st.warning("⚠️ Sem dados no período selecionado para os modelos de IA.")
         st.stop()
 
-    # --- 1. Anomaly Detection ---
     st.markdown("---")
     st.header("1. Radar de Anomalias (Z-Score Temporal)")
     explain("O que é Z-Score?",
@@ -1005,7 +1064,6 @@ elif menu == "🤖 IA & Modelos Preditivos":
     else:
         st.info("Expanda o filtro de datas para ter mais pontos e ativar a análise de anomalias (mínimo 3 dias).")
 
-    # --- 2. K-Means E-mail ---
     st.markdown("---")
     st.header("2. Clusterização de Campanhas (K-Means)")
     explain("Como o K-Means funciona?",
@@ -1040,7 +1098,6 @@ elif menu == "🤖 IA & Modelos Preditivos":
     else:
         st.info("Mínimo de 4 campanhas de e-mail necessárias para treinar o K-Means.")
 
-    # --- 3. OLS Blog ---
     st.markdown("---")
     st.header("3. Previsibilidade de Conversão (Regressão OLS)")
     explain("O que a regressão diz?",
@@ -1060,7 +1117,6 @@ elif menu == "🤖 IA & Modelos Preditivos":
         fig_ols.update_layout(**PLOTLY_LAYOUT, yaxis_tickformat='.1%')
         st.plotly_chart(fig_ols, width="stretch")
 
-        # R² da regressão
         try:
             import statsmodels.api as sm
             X_ols = sm.add_constant(blo_f['Tempo da Página'].fillna(0))
@@ -1079,7 +1135,6 @@ elif menu == "🤖 IA & Modelos Preditivos":
     else:
         st.info("Mínimo de 3 artigos no Blog para traçar a Regressão Linear.")
 
-    # --- 4. Heatmap LinkedIn ---
     st.markdown("---")
     st.header("4. Matriz de Densidade — LinkedIn")
     explain("Combinação ideal",
