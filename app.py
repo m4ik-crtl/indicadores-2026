@@ -286,15 +286,13 @@ with st.spinner("Carregando dados..."):
     df_over, df_lin, df_lin_raw, df_blo, df_mai, df_lista = carregar_dados()
 
 # ============================================================
-# 📅 DATA DA ÚLTIMA ATUALIZAÇÃO
+# 📅 DATA DA ÚLTIMA ATUALIZAÇÃO (quando o Jupyter foi executado)
 # ============================================================
-_datas_atualizacao = pd.Series(
-    df_lin['Data'].dropna().tolist() +
-    df_blo['Data'].dropna().tolist() +
-    df_mai['Data de Envio'].dropna().tolist()
-)
-ULTIMA_ATUALIZACAO = _datas_atualizacao.max() if not _datas_atualizacao.empty else datetime.date.today()
-ULTIMA_ATUALIZACAO_STR = pd.Timestamp(ULTIMA_ATUALIZACAO).strftime("%d/%m/%Y")
+try:
+    with open('dataset/ultima_atualizacao.txt', 'r') as _f:
+        ULTIMA_ATUALIZACAO_STR = _f.read().strip()
+except Exception:
+    ULTIMA_ATUALIZACAO_STR = datetime.date.today().strftime('%d/%m/%Y')
 
 # ============================================================
 # SIDEBAR
@@ -372,11 +370,12 @@ st.sidebar.markdown(f"""
         margin: 0 0 4px 0;
     ">Última Atualização</p>
     <p style="
-        color: #C9D1D9;
-        font-size: 1.1rem;
+        color: #FFFFFF;
+        font-size: 1.25rem;
         font-weight: 700;
         margin: 0;
         font-family: 'DM Mono', monospace;
+        letter-spacing: 0.05em;
     ">{ULTIMA_ATUALIZACAO_STR}</p>
     <p style="
         color: #7D8590;
