@@ -370,7 +370,7 @@ st.sidebar.markdown(f"""
         margin: 0 0 4px 0;
     ">Última Atualização</p>
     <p style="
-        color: #FFFFFF;
+        color: var(--text-color);
         font-size: 1.25rem;
         font-weight: 700;
         margin: 0;
